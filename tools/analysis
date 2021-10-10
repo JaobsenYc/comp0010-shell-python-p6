@@ -1,0 +1,5 @@
+#!/bin/bash
+
+TOOLS_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+cd "$TOOLS_ROOT/../" && (flake8 --format=html --htmldir=flake-report --exclude system_test || true) && cd flake-report/ && python3 -m http.server
