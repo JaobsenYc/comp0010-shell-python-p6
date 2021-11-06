@@ -2,3 +2,4 @@ nose
 coverage
 flake8-html
 junit2html
+parsy

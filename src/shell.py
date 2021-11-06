@@ -5,6 +5,8 @@ from os import listdir
 from collections import deque
 from glob import glob
 from apps import *
+from parsercombinator import complex_expression
+
 
 def parse_commands(cmdline):
     raw_commands = []
@@ -27,25 +29,24 @@ def get_tokens(command):
             else:
                 tokens.append(m.group(0))
     return tokens[0], tokens[1:]
-            
+
 
 def eval(cmdline, out):
-    raw_commands = parse_commands(cmdline)
-    for command in raw_commands:
-        app_token, args = get_tokens(command)
-        app = {
-            "pwd": Pwd(),
-            "cd": Cd(),
-            "echo": Echo(),
-            "ls": Ls(),
-            "cat": Cat(),
-            "head": Head(),
-            "tail": Tail(),
-            "grep": Grep()
-        }.get(app_token, NotSupported(app_token))
-        app.exec(out, args)
 
-
+    # app_token, args = expression.parse(cmdline)
+    # app = {
+    #     "pwd": Pwd(),
+    #     "cd": Cd(),
+    #     "echo": Echo(),
+    #     "ls": Ls(),
+    #     "cat": Cat(),
+    #     "head": Head(),
+    #     "tail": Tail(),
+    #     "grep": Grep(),
+    # }.get(app_token, NotSupported(app_token))
+    # app.exec(out, args)
+    tree = complex_expression.parse(cmdline)
+    tree.eval(out)
 
 
 if __name__ == "__main__":
