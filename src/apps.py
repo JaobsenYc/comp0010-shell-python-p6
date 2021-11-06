@@ -3,9 +3,11 @@ import sys
 import os
 from os import listdir
 
+
 class Pwd:
     def exec(self, out, args):
         out.append(os.getcwd())
+
 
 class Cd:
     def exec(self, out, args):
@@ -13,9 +15,11 @@ class Cd:
             raise ValueError("wrong number of command line arguments")
         os.chdir(args[0])
 
+
 class Echo:
     def exec(self, out, args):
         out.append(" ".join(args) + "\n")
+
 
 class Ls:
     def exec(self, out, args):
@@ -29,11 +33,13 @@ class Ls:
             if not f.startswith("."):
                 out.append(f + "\n")
 
+
 class Cat:
     def exec(self, out, args):
         for a in args:
             with open(a) as f:
                 out.append(f.read())
+
 
 class Head:
     def exec(self, out, args):
@@ -52,6 +58,7 @@ class Head:
             lines = f.readlines()
             for i in range(0, min(len(lines), num_lines)):
                 out.append(lines[i])
+
 
 class Tail:
     def exec(self, out, args):
@@ -72,6 +79,7 @@ class Tail:
             for i in range(0, display_length):
                 out.append(lines[len(lines) - display_length + i])
 
+
 class Grep:
     def exec(self, out, args):
         if len(args) < 2:
@@ -87,6 +95,7 @@ class Grep:
                             out.append(f"{file}:{line}")
                         else:
                             out.append(line)
+
 
 class NotSupported:
     def __init__(self, app_token):
