@@ -58,4 +58,5 @@ def complex_expression():
     return root
 
 
-print(complex_expression.parse("echo hi; echo danny"))
+if __name__ == "__main__":
+    print(complex_expression.parse("echo hi; echo danny"))
