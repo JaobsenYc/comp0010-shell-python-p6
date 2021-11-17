@@ -10,13 +10,31 @@ semi = string(";")
 word = regex("[^\"'\\s;]+").desc("executable command or argument")
 openParen = string("(")
 closeParen = string(")")
+in_dir = string("<")
+to_dir = string(">")
+redirection = seq((in_dir | to_dir) , space >> word).desc("redirection")
+
+expression = seq(word, arguments)
+
+@generate
+def call():
+    args = yield (space >> redirection).many()
+        r = Redirection()
+        for arg in args:
+            r.eval(arg)
+    input,output = r.get()
+
+    yield optional_space
+    e = yield expression
+    Call(e,r)
+    yield (space)
+    
 
 
 @generate
 def string_():
     s = yield regex("\"[^\"]+\"|'[^']+'").desc("quoted characters")
     return s[1:-1]
-
 
 @generate
 def globbed_word():
@@ -38,11 +56,9 @@ def arguments():
 
 # arguments = (space >> (string_ | word)).many()
 
-expression = seq(word, arguments)
-
 
 @generate
-def complex_expression():
+def sequence():
     e = yield expression
     root = Expression(e)
     while True:
@@ -55,8 +71,13 @@ def complex_expression():
             root = operator
         else:
             break
+
     return root
 
+@generate
+def complex_expression():
+    return sequence()
 
-if __name__ == "__main__":
-    print(complex_expression.parse("echo hi; echo danny"))
+
+# if __name__ == "__main__":
+#     print(complex_expression.parse("echo hi; echo danny"))

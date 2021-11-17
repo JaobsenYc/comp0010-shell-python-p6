@@ -8,27 +8,27 @@ from apps import *
 from parsercombinator import complex_expression
 
 
-def parse_commands(cmdline):
-    raw_commands = []
-    for m in re.finditer("([^\"';]+|\"[^\"]*\"|'[^']*')", cmdline):
-        if m.group(0):
-            raw_commands.append(m.group(0))
-    return raw_commands
+# def parse_commands(cmdline):
+#     raw_commands = []
+#     for m in re.finditer("([^\"';]+|\"[^\"]*\"|'[^']*')", cmdline):
+#         if m.group(0):
+#             raw_commands.append(m.group(0))
+#     return raw_commands
 
 
-def get_tokens(command):
-    tokens = []
-    for m in re.finditer("[^\\s\"']+|\"([^\"]*)\"|'([^']*)'", command):
-        if m.group(1) or m.group(2):
-            quoted = m.group(0)
-            tokens.append(quoted[1:-1])
-        else:
-            globbing = glob(m.group(0))
-            if globbing:
-                tokens.extend(globbing)
-            else:
-                tokens.append(m.group(0))
-    return tokens[0], tokens[1:]
+# def get_tokens(command):
+#     tokens = []
+#     for m in re.finditer("[^\\s\"']+|\"([^\"]*)\"|'([^']*)'", command):
+#         if m.group(1) or m.group(2):
+#             quoted = m.group(0)
+#             tokens.append(quoted[1:-1])
+#         else:
+#             globbing = glob(m.group(0))
+#             if globbing:
+#                 tokens.extend(globbing)
+#             else:
+#                 tokens.append(m.group(0))
+#     return tokens[0], tokens[1:]
 
 
 def eval(cmdline, out):

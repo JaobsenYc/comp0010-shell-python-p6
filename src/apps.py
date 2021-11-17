@@ -38,7 +38,9 @@ class Cat:
     def exec(self, out, args):
         for a in args:
             with open(a) as f:
-                out.append(f.read())
+                content = f.read()
+                # print("cat content:\n" + content)
+                out.append(content)
 
 
 class Head:
