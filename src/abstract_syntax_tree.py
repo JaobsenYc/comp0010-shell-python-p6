@@ -25,10 +25,10 @@ class RedirectIn(AST):
     pass
 
   def __str__(self) -> str:
-    return f"IOOut({str(self.arg)})"
+    return f"RediectIn({str(self.arg)})"
 
   def __repr__(self) -> str:
-    return f"IOOut({str(self.arg)})"
+    return f"RediectIn({str(self.arg)})"
       
 class RedirectOut(AST):
   def __init__(self, arg) -> None:
@@ -38,10 +38,10 @@ class RedirectOut(AST):
     pass
 
   def __str__(self) -> str:
-    return f"IOIn({str(self.arg)})"
+    return f"RediectOut({str(self.arg)})"
 
   def __repr__(self) -> str:
-    return f"IOIn({str(self.arg)})"
+    return f"RediectOut({str(self.arg)})"
 
 class Call(AST):
   def __init__(self, redirects, appName, args) -> None:

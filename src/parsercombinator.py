@@ -85,7 +85,7 @@ def command():
     return basis
 
 if __name__ == "__main__":
-    print(command.parse("< txt call a b \"a\" > out| hello `echo arg` *.py *s.py ; cat a "))
+    print(command.parse("< *.py call a b \"a\" > out| hello `echo arg` *.py *s.py ; cat a "))
 
 # space = regex("\s+")
 # optional_space = space.optional()
