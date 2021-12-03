@@ -1,51 +1,91 @@
 from parsy import regex, string, generate, seq
 from glob import glob
 from apps import *
+import abstract_syntax_tree
 from operators import *
 
 pipeOp = string("|")
 semiOp = string(";")
 nonKeyWord = regex("[^`\"'\\s;|\n]+").desc("not keyword string")
 
-singleQuoted = regex("'[^'\n]*'")
-backQuoted = regex("`[^`\n]*`")
+@generate
+def singleQuoted():
+    content = yield regex("'[^'\n]*'")
+    return content
 
+@generate
+def backQuoted():
+    content = yield regex("`[^`\n]*`") 
+    return abstract_syntax_tree.Substitution(content[1:-1])
 
 @generate
 def doubleQuoted():
-    start = yield string('"')
+    yield string('"')
     middle = yield (backQuoted | regex('[^\n`"]')).many()
-    last = yield string('"')
-    return start + "".join(middle) + last
+    yield string('"')
+    return f'"{"".join(middle)}"'
 
 
 @generate
 def quoted():
     text = yield singleQuoted | backQuoted | doubleQuoted
-    return text[1:-1]
+    return text
 
 
 whitespace = regex("\\s*")
 lessThan = string("<")
 greaterThan = string(">")
-unquoted = regex("[^\\s\\t'\"`\n;|<>]+")
-argument = quoted | unquoted  # .at_least(1)
-redirection = seq(lessThan | greaterThan, whitespace >> argument)
-atom = redirection | argument
-call = seq(
-    whitespace >> (redirection << whitespace).many(),
-    argument,
-    (whitespace >> atom).many() << whitespace,
-)
+@generate
+def unquoted():
+    s = yield regex("[^\\s\\t'\"`\n;|<>]+")
+    return glob(s) or [s]
 
+
+argument = quoted | unquoted  # .at_least(1)
+# redirection = seq(lessThan | greaterThan, whitespace >> argument)
+@generate
+def redirection():
+    sign = yield lessThan | greaterThan
+    arg = yield whitespace >> unquoted
+    if sign == '<':
+        return abstract_syntax_tree.RedirectIn(arg)
+    else:
+        return abstract_syntax_tree.RedirectOut(arg)
+atom = redirection | argument
+# call = seq(
+#     whitespace >> (redirection << whitespace).many(),
+#     argument,
+#     (whitespace >> atom).many() << whitespace,
+# )
+@generate
+def call():
+    redirections = yield whitespace >> (redirection << whitespace).many()
+    callName = yield backQuoted | unquoted
+    mixed_args = yield (whitespace >> atom).many() << whitespace
+    args = []
+    for a in mixed_args:
+        if type(a) is abstract_syntax_tree.RedirectOut or type(a) is abstract_syntax_tree.RedirectIn:
+            redirections.append(a)
+        else:
+            args.append(a)
+    return abstract_syntax_tree.Call(redirections, callName, args)
 
 sequ = seq(semiOp, call)
 pipe = seq(pipeOp, call)
-command = seq(call, (pipe | sequ).many())
-
+# command = seq(call, (pipe | sequ).many())
+@generate
+def command():
+    basis = yield call
+    additional = yield (pipe | sequ).many()
+    for addition in additional:
+        if addition[0] == ";":
+            basis = abstract_syntax_tree.Seq(basis, addition[1])
+        else:
+            basis = abstract_syntax_tree.Pipe(basis, addition[1])
+    return basis
 
 if __name__ == "__main__":
-    print(command.parse("< hello.txt > narnia.csv hello -t 'yes'| cat | scru output"))
+    print(command.parse("< txt call a b \"a\" > out| hello `echo arg` *.py *s.py ; cat a "))
 
 # space = regex("\s+")
 # optional_space = space.optional()
