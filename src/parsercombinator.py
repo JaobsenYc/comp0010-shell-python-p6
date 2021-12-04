@@ -43,7 +43,7 @@ greaterThan = string(">")
 @generate
 def unquoted():
     s = yield regex("[^\\s\\t'\"`\n;|<>]+")
-    return glob(s) or s
+    return s
 
 
 argument = quoted | unquoted  # .at_least(1)

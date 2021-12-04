@@ -30,7 +30,7 @@ class Cd(Application):
 class Echo(Application):
     def exec(self, args, stdin=None):
         stdout = deque()
-        print(args)
+        # print(args)
         stdout.append(" ".join(args) + "\n")
         return stdout
 
@@ -51,7 +51,7 @@ class Ls:
 
 
 class Cat:
-    def exec(self, args):
+    def exec(self, args, stdin=None):
         stdout = deque()
         for a in args:
             with open(a) as f:

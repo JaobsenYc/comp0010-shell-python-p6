@@ -26,5 +26,5 @@ if __name__ == "__main__":
             print(os.getcwd() + "> ", end="")
             cmdline = input()
             seq = command.parse(cmdline)
-            print("sit2: " + cmdline)
+            # print("sit2: " + cmdline)
             seq.accept(visitor)
