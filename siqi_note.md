@@ -1,3 +1,5 @@
+python3 system_test/tests.py -v TestFEL.test_cat
+
 Agile
 * Dynamic Dispatch
 * Design Pattern
