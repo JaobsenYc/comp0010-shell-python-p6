@@ -50,7 +50,6 @@ class ASTVisitor(Visitor):
             with open(file) as f:
                 content = f.read()
                 out += content  # Do we need spaces or not?
-
         return out
 
     def visitRedirectOut(self, redirectOut):
@@ -72,9 +71,10 @@ class ASTVisitor(Visitor):
         factory = AppsFactory()
 
         for r in redirects:
-            if type(r) == RedirectIn and not stdin:  # check type
+            if isinstance(r, RedirectIn) and not stdin:  # check type
                 stdin = r.accept(self)
-            elif type(r) == RedirectOut and not stdout:
+                # print(stdin)
+            elif isinstance(r, RedirectOut) and not stdout:
                 stdout = r.accept(self)
             else:
                 raise Exception("invalid redirections")
@@ -84,6 +84,7 @@ class ASTVisitor(Visitor):
             stdin = input
 
         app = factory.getApp(appName)
+        # print("visitor" + str(redirects))
         out = app.exec(args=args, stdin=stdin)
 
         if stdout:

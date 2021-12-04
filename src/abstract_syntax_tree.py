@@ -26,7 +26,7 @@ class RedirectIn(AST):
         self.arg = arg
 
     def accept(self, visitor):
-        visitor.visitRedirectIn(self)
+        return visitor.visitRedirectIn(self)
 
     def __str__(self) -> str:
         return f"RediectIn({str(self.arg)})"

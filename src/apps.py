@@ -51,11 +51,12 @@ class Ls:
 
 
 class Cat:
-    def exec(self, args, stdin=None):
+    def exec(self, args=None, stdin=None):
         stdout = deque()
-        for a in args:
-            with open(a) as f:
-                stdout.append(f.read())
+        # for a in args:
+        #     with open(a) as f:
+        #         stdout.append(f.read())
+        stdout.append(stdin)
 
         return stdout
 
