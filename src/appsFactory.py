@@ -1,4 +1,4 @@
-from apps import Pwd, Cd, Echo, Ls, Cat, Head, Tail, Grep, NonSupported
+from apps import Pwd, Cd, Echo, Ls, Cat, Head, Tail, Grep, NotSupported
 
 
 def singleton(cls):
@@ -37,5 +37,5 @@ class AppsFactory:
         # else:
         #     cls = self.menu[appName]
 
-        app = self.menu.get(appName)
+        app = self.menu.get(appName, NotSupported(appName))
         return app

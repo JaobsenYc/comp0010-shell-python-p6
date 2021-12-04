@@ -8,15 +8,13 @@ import fnmatch
 
 
 class Application(ABC):
-
     @classmethod
     def exec(self, args, stdin):
         raise (Exception(NotImplementedError))
 
 
 class Pwd(Application):
-
-    def exec(self, stdin=''):
+    def exec(self, stdin=None):
         stdout = deque()
         stdout.append(os.getcwd())
         return stdout
@@ -52,7 +50,6 @@ class Ls:
 
 
 class Cat:
-
     def exec(self, args):
         stdout = deque()
         for a in args:
@@ -208,12 +205,12 @@ if __name__ == "__main__":
     # print("Ls",Ls().exec(args=[]))
     # print("Ls", Ls().exec(args=["F:\\OneDrive\\OneDrive - University College London\\"]))
     print("Cat", Cat().exec(args=["*.py"]))
-    print("Grep", Grep().exec(args=['test file 3*', "test.txt"]))
-    print("Head", Head().exec(args=['-n', 3, "test.txt"]))
-    print("Tail", Tail().exec(args=['-n', 3, "test.txt"]))
-    print("Echo", Echo().exec(args=['test']))
-    print("Find local", Find().exec(args=['-name', 'parsercombinator.*']))
-    print("Find local", Find().exec(args=[".\doc", '-name', '*.py']))
+    print("Grep", Grep().exec(args=["test file 3*", "test.txt"]))
+    print("Head", Head().exec(args=["-n", 3, "test.txt"]))
+    print("Tail", Tail().exec(args=["-n", 3, "test.txt"]))
+    print("Echo", Echo().exec(args=["test"]))
+    print("Find local", Find().exec(args=["-name", "parsercombinator.*"]))
+    print("Find local", Find().exec(args=[".\doc", "-name", "*.py"]))
     # print("Cut file", Cut().exec(args=["-b", '5-7,1-8', 'test.txt']))
     # args_num = len(sys.argv) - 1
     # if args_num > 0:

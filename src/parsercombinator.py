@@ -8,15 +8,18 @@ pipeOp = string("|")
 semiOp = string(";")
 nonKeyWord = regex("[^`\"'\\s;|\n]+").desc("not keyword string")
 
+
 @generate
 def singleQuoted():
     content = yield regex("'[^'\n]*'")
     return content
 
+
 @generate
 def backQuoted():
-    content = yield regex("`[^`\n]*`") 
+    content = yield regex("`[^`\n]*`")
     return abstract_syntax_tree.Substitution(content[1:-1])
+
 
 @generate
 def doubleQuoted():
@@ -35,6 +38,8 @@ def quoted():
 whitespace = regex("\\s*")
 lessThan = string("<")
 greaterThan = string(">")
+
+
 @generate
 def unquoted():
     s = yield regex("[^\\s\\t'\"`\n;|<>]+")
@@ -47,10 +52,12 @@ argument = quoted | unquoted  # .at_least(1)
 def redirection():
     sign = yield lessThan | greaterThan
     arg = yield whitespace >> unquoted
-    if sign == '<':
+    if sign == "<":
         return abstract_syntax_tree.RedirectIn(arg)
     else:
         return abstract_syntax_tree.RedirectOut(arg)
+
+
 atom = redirection | argument
 # call = seq(
 #     whitespace >> (redirection << whitespace).many(),
@@ -64,11 +71,15 @@ def call():
     mixed_args = yield (whitespace >> atom).many() << whitespace
     args = []
     for a in mixed_args:
-        if type(a) is abstract_syntax_tree.RedirectOut or type(a) is abstract_syntax_tree.RedirectIn:
+        if (
+            type(a) is abstract_syntax_tree.RedirectOut
+            or type(a) is abstract_syntax_tree.RedirectIn
+        ):
             redirections.append(a)
         else:
             args.append(a)
     return abstract_syntax_tree.Call(redirections, callName, args)
+
 
 sequ = seq(semiOp, call)
 pipe = seq(pipeOp, call)
@@ -84,8 +95,10 @@ def command():
             basis = abstract_syntax_tree.Pipe(basis, addition[1])
     return basis
 
+
 if __name__ == "__main__":
-    print(command.parse("< *.py call a b \"a\" > out| hello `echo arg` *.py *s.py ; cat a "))
+    # print(command.parse("< *.py call a b \"a\" > out| hello `echo arg` *.py *s.py ; cat a "))
+    print(command.parse('< *.py call a b "a" > out'))
 
 # space = regex("\s+")
 # optional_space = space.optional()

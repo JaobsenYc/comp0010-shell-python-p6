@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from abstract_syntax_tree import RedirectIn, RedirectOut
+from abstract_syntax_tree import Call, RedirectIn, RedirectOut
 from parsercombinator import command
 from glob import glob
 from appsFactory import AppsFactory
@@ -19,7 +19,7 @@ class Visitor(ABC):
         pass
 
     @abstractmethod
-    def visitCall(self, call, input=None):
+    def visitCall(self, call, input=None, needPipeReturn=False):
         pass
 
     @abstractmethod
@@ -45,7 +45,7 @@ class ASTVisitor(Visitor):
     def visitRedirectIn(self, redirectIn):
         out = ""
 
-        fs = glob(redirectIn)
+        fs = glob(redirectIn.arg)
         for file in fs:
             with open(file) as f:
                 content = f.read()
@@ -54,20 +54,20 @@ class ASTVisitor(Visitor):
         return out
 
     def visitRedirectOut(self, redirectOut):
-        fs = glob(redirectOut)
+        fs = glob(redirectOut.arg)
+        n = len(fs)
 
-        if len(fs) > 1:
+        if n > 1:
             raise Exception("invalid redirection out")  # or other error handling?
 
-        with open(fs[0]) as f:
-            f.write()
+        return fs[0] if n == 1 else None  # incase '>' has nothing followed
 
-    def visitCall(self, call):
+    def visitCall(self, call, input=None, needPipeReturn=False):
         redirects = call.redirects
         appName = call.appName
         args = call.args
 
-        stdin, stdout = None
+        stdin, stdout = None, None
 
         factory = AppsFactory()
 
@@ -80,9 +80,19 @@ class ASTVisitor(Visitor):
                 raise Exception("invalid redirections")
 
         app = factory.getApp(appName)
-        out = app.exec(app.exec(stdin=stdin, args=args))
+        out = app.exec(args=args, stdin=stdin)
 
-        return out
+        if stdout:
+            with open(stdout) as f:
+                while len(out) > 0:
+                    line = out.popleft()
+                    f.write(line)
+        elif not needPipeReturn:
+            while len(out) > 0:
+                line = out.popleft()
+                print(line, end="")
+        else:
+            return out
 
     def visitSeq(self, seq):
         left = seq.left
@@ -91,14 +101,15 @@ class ASTVisitor(Visitor):
         outLeft = left.accept(self)
         outRight = right.accept(self)
 
-        print(outLeft)
-        print(outRight)
-
     def visitPipe(self, pipe):  # what if | has redirectOut before?
         left = pipe.left
         right = pipe.right
 
-        outLeft = left.accept(self)
-        outRight = right.accept(self)
+        outLeft = left.accept(self, notPrint=True)
+        outRight = right.accept(self, input=outLeft)
 
-        return outRight
+
+if __name__ == "__main__":
+    visitor = ASTVisitor()
+    call = Call(redirects=[], appName="echo", args=["hello"])
+    call.accept(visitor)
