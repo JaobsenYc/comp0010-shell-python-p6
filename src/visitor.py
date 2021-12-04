@@ -79,6 +79,10 @@ class ASTVisitor(Visitor):
             else:
                 raise Exception("invalid redirections")
 
+        # otherwise, stdin will overwrite input from last call result piped in
+        if input and not stdin:
+            stdin = input
+
         app = factory.getApp(appName)
         out = app.exec(args=args, stdin=stdin)
 
