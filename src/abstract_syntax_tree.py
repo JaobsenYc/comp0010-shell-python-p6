@@ -52,6 +52,10 @@ class RedirectOut(AST):
 class Call(AST):
     def __init__(self, redirects, appName, args) -> None:
         self.redirects = redirects
+        # if len(appName) == 1:
+        #     self.appName = appName[0]
+        # else:
+        #     raise Exception("wrong appName input")
         self.appName = appName
         self.args = args
 

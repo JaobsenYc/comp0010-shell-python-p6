@@ -30,6 +30,7 @@ class Cd(Application):
 class Echo(Application):
     def exec(self, args, stdin=None):
         stdout = deque()
+        print(args)
         stdout.append(" ".join(args) + "\n")
         return stdout
 

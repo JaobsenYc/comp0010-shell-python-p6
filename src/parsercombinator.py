@@ -43,7 +43,7 @@ greaterThan = string(">")
 @generate
 def unquoted():
     s = yield regex("[^\\s\\t'\"`\n;|<>]+")
-    return glob(s) or [s]
+    return glob(s) or s
 
 
 argument = quoted | unquoted  # .at_least(1)
@@ -98,7 +98,7 @@ def command():
 
 if __name__ == "__main__":
     # print(command.parse("< *.py call a b \"a\" > out| hello `echo arg` *.py *s.py ; cat a "))
-    print(command.parse('< *.py call a b "a" > out'))
+    print(command.parse("echo hello"))
 
 # space = regex("\s+")
 # optional_space = space.optional()
