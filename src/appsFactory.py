@@ -1,4 +1,4 @@
-from apps import Pwd, Cd, Echo, Ls, Cat, Head, Tail, Grep, NotSupported
+from apps import Pwd, Cd, Echo, Ls, Cat, Head, Tail, Grep, Cut, Find, NotSupported
 
 
 def singleton(cls):
@@ -25,6 +25,8 @@ class AppsFactory:
             "head": Head(),
             "tail": Tail(),
             "grep": Grep(),
+            "cut": Cut(),
+            "find": Find(),
         }
 
     def getApp(self, appName, *remain):
