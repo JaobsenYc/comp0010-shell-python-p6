@@ -14,7 +14,7 @@ class Application(ABC):
 
 
 class Pwd(Application):
-    def exec(self, stdin=None):
+    def exec(self, args, stdin=None):
         stdout = deque()
         stdout.append(os.getcwd())
         return stdout
@@ -25,6 +25,7 @@ class Cd(Application):
         if len(args) == 0 or len(args) > 1:
             raise ValueError("wrong number of command line arguments")
         os.chdir(args[0])
+        # print("apps/Cd: " + os.getcwd())
 
 
 class Echo(Application):
@@ -51,11 +52,12 @@ class Ls:
 
 
 class Cat:
-    def exec(self, args=None, stdin=None):
+    def exec(self, args, stdin=None):
         stdout = deque()
 
         if stdin:
-            stdout.append(stdin)
+            with open(stdin) as f:
+                stdout.append(f.read())
         else:
             for a in args:
                 with open(a) as f:
@@ -67,54 +69,87 @@ class Cat:
 class Head:
     def exec(self, args, stdin=None):
         stdout = deque()
-        print(args)
-        if len(args) != 1 and len(args) != 3:
-            raise ValueError("wrong number of command line arguments")
-        if len(args) == 1:
-            num_lines = 10
-            file = args[0]
-        if len(args) == 3:
-            if args[0] != "-n":
-                raise ValueError("wrong flags")
-            else:
-                num_lines = int(args[1])
-                file = args[2]
-        with open(file) as f:
-            lines = f.readlines()
-            for i in range(0, min(len(lines), num_lines)):
-                stdout.append(lines[i])
+        # print(stdin)
+        if stdin:
+            if len(args) != 0 and len(args) != 2:
+                raise ValueError("wrong number of command line arguments")
+            if len(args) == 0:
+                num_lines = 10
+            if len(args) == 2:
+                if args[0] != "-n":
+                    raise ValueError("wrong flags")
+                else:
+                    num_lines = int(args[1])
+            with open(stdin) as f:
+                lines = f.readlines()
+                for i in range(0, min(len(lines), num_lines)):
+                    stdout.append(lines[i])
+        else:
+            if len(args) != 1 and len(args) != 3:
+                raise ValueError("wrong number of command line arguments")
+            if len(args) == 1:
+                num_lines = 10
+                file = args[0]
+            if len(args) == 3:
+                if args[0] != "-n":
+                    raise ValueError("wrong flags")
+                else:
+                    num_lines = int(args[1])
+                    file = args[2]
+            with open(file) as f:
+                lines = f.readlines()
+                for i in range(0, min(len(lines), num_lines)):
+                    stdout.append(lines[i])
         return stdout
 
 
 class Tail:
     def exec(self, args, stdin=None):
         stdout = deque()
-        if len(args) != 1 and len(args) != 3:
-            raise ValueError("wrong number of command line arguments")
-        if len(args) == 1:
-            num_lines = 10
-            file = args[0]
-        if len(args) == 3:
-            if args[0] != "-n":
-                raise ValueError("wrong flags")
-            else:
-                num_lines = int(args[1])
-                file = args[2]
-        with open(file) as f:
-            lines = f.readlines()
-            display_length = min(len(lines), num_lines)
-            for i in range(0, display_length):
-                stdout.append(lines[len(lines) - display_length + i])
+        # print(stdin)
+        if stdin:
+            if len(args) != 0 and len(args) != 2:
+                raise ValueError("wrong number of command line arguments")
+            if len(args) == 0:
+                num_lines = 10
+            if len(args) == 2:
+                if args[0] != "-n":
+                    raise ValueError("wrong flags")
+                else:
+                    num_lines = int(args[1])
+            with open(stdin) as f:
+                lines = f.readlines()
+                display_length = min(len(lines), num_lines)
+                for i in range(0, min(len(lines), num_lines)):
+                    stdout.append(lines[len(lines) - display_length + i])
+        else:
+            if len(args) != 1 and len(args) != 3:
+                raise ValueError("wrong number of command line arguments")
+            if len(args) == 1:
+                num_lines = 10
+                file = args[0]
+            if len(args) == 3:
+                if args[0] != "-n":
+                    raise ValueError("wrong flags")
+                else:
+                    num_lines = int(args[1])
+                    file = args[2]
+            with open(file) as f:
+                lines = f.readlines()
+                display_length = min(len(lines), num_lines)
+                for i in range(0, display_length):
+                    stdout.append(lines[len(lines) - display_length + i])
         return stdout
 
 
 class Grep:
     def exec(self, args, stdin=None):
+        # print("args: ", args)
         stdout = deque()
         if len(args) < 2:
             raise ValueError("wrong number of command line arguments")
         pattern = args[0]
-        print(pattern)
+        # print(pattern)
         files = args[1:]
         for file in files:
             with open(file) as f:
@@ -126,7 +161,7 @@ class Grep:
                         if len(files) > 1:
                             stdout.append(f"{file}:{line}")
                         else:
-                            print(line)
+                            # print(line)
                             stdout.append(line)
         return stdout
 

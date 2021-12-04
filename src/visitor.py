@@ -3,6 +3,7 @@ from abstract_syntax_tree import Call, RedirectIn, RedirectOut
 from parsercombinator import command
 from glob import glob
 from appsFactory import AppsFactory
+from collections import deque
 
 
 class Visitor(ABC):
@@ -46,11 +47,11 @@ class ASTVisitor(Visitor):
         out = ""
 
         fs = glob(redirectIn.arg)
-        for file in fs:
-            with open(file) as f:
-                content = f.read()
-                out += content  # Do we need spaces or not?
-        return out
+        # for file in fs:
+        #     with open(file) as f:
+        #         content = f.read()
+        #         out += content  # Do we need spaces or not?
+        return fs
 
     def visitRedirectOut(self, redirectOut):
         fs = glob(redirectOut.arg)
@@ -67,6 +68,7 @@ class ASTVisitor(Visitor):
         args = call.args
 
         stdin, stdout = None, None
+        out = deque()
 
         factory = AppsFactory()
 
@@ -84,27 +86,31 @@ class ASTVisitor(Visitor):
             stdin = input
 
         app = factory.getApp(appName)
-        # print("visitor" + str(redirects))
-        out = app.exec(args=args, stdin=stdin)
+        if stdin:
+            for i in stdin:
+                out.extend(app.exec(args, stdin=i))
+        else:
+            out = app.exec(args, stdin=stdin)
 
         if stdout:
             with open(stdout) as f:
                 while len(out) > 0:
                     line = out.popleft()
+                    # print(line)
                     f.write(line)
         elif not needPipeReturn:
             while len(out) > 0:
                 line = out.popleft()
                 print(line, end="")
-        else:
+        elif needPipeReturn:
             return out
 
     def visitSeq(self, seq):
         left = seq.left
         right = seq.right
 
-        outLeft = left.accept(self)
-        outRight = right.accept(self)
+        left.accept(self)
+        right.accept(self)
 
     def visitPipe(self, pipe):  # what if | has redirectOut before?
         left = pipe.left

@@ -72,7 +72,7 @@ class Seq(AST):
         self.right = right
 
     def accept(self, visitor):
-        pass
+        visitor.visitSeq(self)
 
     def __str__(self) -> str:
         return f"Seq({str(self.left)}, {str(self.right)})"
@@ -84,7 +84,7 @@ class Pipe(AST):
         self.right = right
 
     def accept(self, visitor):
-        pass
+        visitor.visitPipe(self)
 
     def __str__(self) -> str:
         return f"Pipe({str(self.left)}, {str(self.right)})"
