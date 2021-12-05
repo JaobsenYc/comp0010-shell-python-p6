@@ -185,26 +185,34 @@ class Cut:
         with open(file) as f:
             pattern_list = pattern.split(",")
 
-            # 但有一点要注意，cut命令如果使用了-b选项，那么执行此命令时，cut会先把-b后面所有的定位进行从小到大排序，然后再提取。
-            # stdout.
+            # If the cut command uses the -b option, then when executing this command,
+            # cut will sort all the positions after -b from small to large, and then extract them.
+
             lines = f.readlines()
 
             for line in lines:
+                start_list = []
+                end_list = []
+                byte_list = []
+                cut_line = ""
                 for p in pattern_list:
                     if "-" in p:
                         start_i, end_i = p.split("-")
-                        # if start_i == None:
-                        #     start_i = 0
-                        # if end_i == None:
-                        #     end_i == len(line)
-                        print("开始", start_i)
-                        start_i, end_i = int(start_i), int(end_i)
-                        print(start_i, end_i)
-                        print(line[start_i:end_i])
-                        stdout.append(line[start_i:end_i])
+                        start_i = 1 if start_i == '' else int(start_i)
+                        end_i = len(line) if end_i == '' else int(end_i)
+                        start_list.append(int(start_i) - 1)
+                        end_list.append(int(end_i) - 1)
                     else:
-                        stdout.append(line)
-            print(pattern_list)
+                        byte_list.append(int(p) - 1)
+                for i in range(len(line)):
+                    if i in byte_list:
+                        cut_line += line[i]
+                    else:
+                        for j in range(len(start_list)):
+                            if i >= start_list[j] and i <= end_list[j]:
+                                cut_line += line[i]
+                                break
+                stdout.append(cut_line)
 
         return stdout
 
@@ -227,10 +235,6 @@ class Find:
         for path, dirlist, filelist in os.walk(dict):
 
             for name in fnmatch.filter(filelist, pattern):
-                # if os.getcwd() == "/":
-                #     stdout.append(os.getcwd() + name)
-                # else:
-                #     stdout.append(path + '/' + name)
                 stdout.append(path + '/' + name)
             print(stdout)
 
@@ -256,9 +260,9 @@ if __name__ == "__main__":
     # print("Head", Head().exec(args=["-n", 3, "test.txt"]))
     # print("Tail", Tail().exec(args=["-n", 3, "test.txt"]))
     # print("Echo", Echo().exec(args=["test"]))
-    print("Find local", Find().exec(args=["-name", "parsercombinator.*"]))
+    # print("Find local", Find().exec(args=["-name", "parsercombinator.*"]))
     print("Find local", Find().exec(args=["..\doc", "-name", "*.md"]))
-    # print("Cut file", Cut().exec(args=["-b", '5-7,1-8', 'test.txt']))
+    print("Cut file", Cut().exec(args=["-b", '1-2,-4,8', 'test.txt']))
     # args_num = len(sys.argv) - 1
     # if args_num > 0:
     #     if args_num != 2:
