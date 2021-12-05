@@ -225,8 +225,15 @@ class Find:
             pattern = args[1]
             dict = os.getcwd()
         for path, dirlist, filelist in os.walk(dict):
+
             for name in fnmatch.filter(filelist, pattern):
-                stdout.append(name)
+                # if os.getcwd() == "/":
+                #     stdout.append(os.getcwd() + name)
+                # else:
+                #     stdout.append(path + '/' + name)
+                stdout.append(path + '/' + name)
+            print(stdout)
+
         return stdout
 
 
@@ -244,13 +251,13 @@ if __name__ == "__main__":
     # print("Pwd",Pwd().exec())
     # print("Ls",Ls().exec(args=[]))
     # print("Ls", Ls().exec(args=["F:\\OneDrive\\OneDrive - University College London\\"]))
-    print("Cat", Cat().exec(args=["*.py"]))
-    print("Grep", Grep().exec(args=["test file 3*", "test.txt"]))
-    print("Head", Head().exec(args=["-n", 3, "test.txt"]))
-    print("Tail", Tail().exec(args=["-n", 3, "test.txt"]))
-    print("Echo", Echo().exec(args=["test"]))
+    # print("Cat", Cat().exec(args=["*.py"]))
+    # print("Grep", Grep().exec(args=["test file 3*", "test.txt"]))
+    # print("Head", Head().exec(args=["-n", 3, "test.txt"]))
+    # print("Tail", Tail().exec(args=["-n", 3, "test.txt"]))
+    # print("Echo", Echo().exec(args=["test"]))
     print("Find local", Find().exec(args=["-name", "parsercombinator.*"]))
-    print("Find local", Find().exec(args=[".\doc", "-name", "*.py"]))
+    print("Find local", Find().exec(args=["..\doc", "-name", "*.md"]))
     # print("Cut file", Cut().exec(args=["-b", '5-7,1-8', 'test.txt']))
     # args_num = len(sys.argv) - 1
     # if args_num > 0:
