@@ -5,6 +5,7 @@ from os import listdir
 from collections import deque
 from abc import ABC, abstractmethod
 import fnmatch
+import itertools
 
 
 class Application(ABC):
@@ -14,7 +15,7 @@ class Application(ABC):
 
 
 class Pwd(Application):
-    def exec(self, args, stdin=None):
+    def exec(self, args=None, stdin=None):
         stdout = deque()
         stdout.append(os.getcwd())
         return stdout
@@ -217,6 +218,52 @@ class Cut:
         return stdout
 
 
+class Uniq:
+    def exec(self, args, stdin=None):
+        stdout = deque()
+        ignore = False
+        if len(args) > 2:
+            raise ValueError("wrong number of command line arguments")
+        elif len(args) == 2:
+            if args[0] != "-i":
+                raise ValueError("wrong flags")
+            else:
+                ignore = True
+            file = args[1]
+        elif len(args) == 1:
+            file = args[0]
+
+        with open(file) as f:
+            lines = f.readlines()
+            output = [k for k, g in itertools.groupby(lines)] if not ignore \
+                else [n for i, n in enumerate(lines) if i == 0 or n.casefold() != lines[i - 1].casefold()]
+            for i in output:
+                stdout.append(i)
+        return stdout
+
+
+class Sort:
+    def exec(self, args, stdin=None):
+        stdout = deque()
+        if len(args) > 2:
+            raise ValueError("wrong number of command line arguments")
+        elif len(args) == 2:
+            if args[0] != "-o":
+                raise ValueError("wrong flags")
+            else:
+                ignore = True
+            file = args[1]
+        elif len(args) == 1:
+            file = args[0]
+
+        with open(file) as f:
+            lines = f.readlines()
+            lines.sort()
+            for i in lines:
+                stdout.append(i)
+        return stdout
+
+
 class Find:
     def exec(self, args, stdin=None):
         stdout = deque()
@@ -249,20 +296,21 @@ class NotSupported:
         raise ValueError(f"unsupported application {self.app_token}")
 
 
-from collections import deque
-
 if __name__ == "__main__":
-    # print("Pwd",Pwd().exec())
-    # print("Ls",Ls().exec(args=[]))
-    # print("Ls", Ls().exec(args=["F:\\OneDrive\\OneDrive - University College London\\"]))
-    # print("Cat", Cat().exec(args=["*.py"]))
-    # print("Grep", Grep().exec(args=["test file 3*", "test.txt"]))
-    # print("Head", Head().exec(args=["-n", 3, "test.txt"]))
-    # print("Tail", Tail().exec(args=["-n", 3, "test.txt"]))
-    # print("Echo", Echo().exec(args=["test"]))
-    # print("Find local", Find().exec(args=["-name", "parsercombinator.*"]))
+    print("Pwd", Pwd().exec())
+    print("Ls", Ls().exec(args=[]))
+    print("Ls", Ls().exec(args=["F:\\OneDrive\\OneDrive - University College London\\"]))
+    print("Cat", Cat().exec(args=["test.txt"]))
+    print("Grep", Grep().exec(args=["test file 3*", "test.txt"]))
+    print("Head", Head().exec(args=["-n", 3, "test.txt"]))
+    print("Tail", Tail().exec(args=["-n", 3, "test.txt"]))
+    print("Echo", Echo().exec(args=["test"]))
+    print("Find local", Find().exec(args=["-name", "parsercombinator.*"]))
     print("Find local", Find().exec(args=["..\doc", "-name", "*.md"]))
     print("Cut file", Cut().exec(args=["-b", '1-2,-4,8', 'test.txt']))
+    print("Uniq Care case", Uniq().exec(args=['test_abc.txt']))
+    print("Uniq Ignore case", Uniq().exec(args=["-i", 'test_abc.txt']))
+    print("Sort", Sort().exec(args=["-o", 'test_abc.txt']))
     # args_num = len(sys.argv) - 1
     # if args_num > 0:
     #     if args_num != 2:
