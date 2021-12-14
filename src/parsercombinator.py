@@ -34,18 +34,21 @@ def doubleQuoted():
     yield string('"')
     middle = yield (backQuoted | regex('[^\n`"]')).many()
     yield string('"')
-    index = []
+
+    hasSub = False
     for n, i in enumerate(middle):
         if isinstance(i, abstract_syntax_tree.Substitution):
-            index.append(n)
+            hasSub = True
+            break
 
     # temporitely implement only containing one back quote
-    res = []
-    if len(index) > 0:
-        res.append("".join(middle[: index[0]]))
-        res.append(middle[index[0]])
-        res.append("".join(middle[index[-1] + 1 :]))
-    return res
+    # res = []
+    # if len(index) > 0:
+    #     res.append("".join(middle[: index[0]]))
+    #     res.append(middle[index[0]])
+    #     res.append("".join(middle[index[-1] + 1 :]))
+    # return res
+    return abstract_syntax_tree.DoubleQuote(middle, hasSub)
 
 
 @generate
@@ -95,8 +98,8 @@ def call():
             or type(a) is abstract_syntax_tree.RedirectIn
         ):
             redirections.append(a)
-        elif isinstance(a, list):
-            args.extend(a)
+        # elif isinstance(a, abstract_syntax_tree.DoubleQuote):
+        #     args.append(a)
         else:
             args.append(a)
     return abstract_syntax_tree.Call(redirections, callName, args)
@@ -119,7 +122,7 @@ def command():
 
 if __name__ == "__main__":
     # print(command.parse("< *.py call a b \"a\" > out| hello `echo arg` *.py *s.py ; cat a "))
-    print(command.parse('echo "a `echo "b"`"'))
+    print(command.parse('echo "b"'))
 
 # space = regex("\s+")
 # optional_space = space.optional()

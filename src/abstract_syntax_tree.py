@@ -7,12 +7,28 @@ class AST(ABC):
         raise Exception("NotImplementedException")
 
 
-class Substitution(AST):
-    def __init__(self, quoted) -> None:
+class DoubleQuote(AST):
+    def __init__(self, quoted, hasSub):
         self.quoted = quoted
+        self.hasSub = hasSub
 
     def accept(self, visitor):
-        visitor.visitSub(self)
+        return visitor.visitDoubleQuote(self)
+
+    def __str__(self):
+        return "DoubleQ({})".format(str(self.quoted))
+
+    def __repr__(self):
+        return "DoubleQ({})".format(str(self.quoted))
+
+
+class Substitution(AST):
+    def __init__(self, quoted):
+        self.quoted = "{}".format(quoted)
+
+    def accept(self, visitor):
+        res = visitor.visitSub(self)
+        return res
 
     def __str__(self) -> str:
         return f"Subeval({str(self.quoted)})"
@@ -40,7 +56,7 @@ class RedirectOut(AST):
         self.arg = arg
 
     def accept(self, visitor):
-        visitor.visitRedirectOut(self)
+        return visitor.visitRedirectOut(self)
 
     def __str__(self) -> str:
         return f"RediectOut({str(self.arg)})"
@@ -59,8 +75,8 @@ class Call(AST):
         self.appName = appName
         self.args = args
 
-    def accept(self, visitor, input=None):
-        visitor.visitCall(self)
+    def accept(self, visitor, input=None, needPipeReturn=False):
+        return visitor.visitCall(self, input=input, needPipeReturn=needPipeReturn)
 
     def __str__(self) -> str:
         return f"Call({str(self.redirects)}, {str(self.appName)}, {str(self.args)})"
@@ -72,7 +88,7 @@ class Seq(AST):
         self.right = right
 
     def accept(self, visitor):
-        visitor.visitSeq(self)
+        return visitor.visitSeq(self)
 
     def __str__(self) -> str:
         return f"Seq({str(self.left)}, {str(self.right)})"
@@ -84,7 +100,7 @@ class Pipe(AST):
         self.right = right
 
     def accept(self, visitor):
-        visitor.visitPipe(self)
+        return visitor.visitPipe(self)
 
     def __str__(self) -> str:
         return f"Pipe({str(self.left)}, {str(self.right)})"
