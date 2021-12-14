@@ -287,9 +287,18 @@ class Find:
             dict = os.getcwd()
         for path, dirlist, filelist in os.walk(dict):
 
+            path1 = path[1:]
+            index = path1.find("/")
+            path1 = path[: index + 1]
+
+            path2 = path[index + 1 :]
+
+            if path1 == os.getcwd():
+                path = "." + path2
+
             for name in fnmatch.filter(filelist, pattern):
-                stdout.append(path + "/" + name)
-            print(stdout)
+                stdout.append(path + "/" + name + "\n")
+            # print(stdout)
 
         return stdout
 
