@@ -147,7 +147,7 @@ class ASTVisitor(Visitor):
         left = pipe.left
         right = pipe.right
 
-        outLeft = left.accept(self, notPrint=True)
+        outLeft = left.accept(self, needPipeReturn=True)
         outRight = right.accept(self, input=outLeft)
 
 

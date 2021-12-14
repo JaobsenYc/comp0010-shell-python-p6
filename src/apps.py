@@ -169,6 +169,7 @@ class Grep:
 
 class Cut:
     def exec(self, args, stdin=None):
+        lines = None
         stdout = deque()
         if len(args) > 3:
             raise ValueError("wrong number of command line arguments")
@@ -181,40 +182,38 @@ class Cut:
             if args[0] != "-b":
                 raise ValueError("wrong flags")
             pattern = args[1]
-            cmdline = input()
-            file = cmdline
-        with open(file) as f:
-            pattern_list = pattern.split(",")
+            lines = [stdin.strip()]
 
-            # If the cut command uses the -b option, then when executing this command,
-            # cut will sort all the positions after -b from small to large, and then extract them.
+        pattern_list = pattern.split(",")
+        if not lines:
+            with open(file) as f:
+                # If the cut command uses the -b option, then when executing this command,
+                # cut will sort all the positions after -b from small to large, and then extract them.
+                lines = f.readlines()
 
-            lines = f.readlines()
-
-            for line in lines:
-                start_list = []
-                end_list = []
-                byte_list = []
-                cut_line = ""
-                for p in pattern_list:
-                    if "-" in p:
-                        start_i, end_i = p.split("-")
-                        start_i = 1 if start_i == "" else int(start_i)
-                        end_i = len(line) if end_i == "" else int(end_i)
-                        start_list.append(int(start_i) - 1)
-                        end_list.append(int(end_i) - 1)
-                    else:
-                        byte_list.append(int(p) - 1)
-                for i in range(len(line)):
-                    if i in byte_list:
-                        cut_line += line[i]
-                    else:
-                        for j in range(len(start_list)):
-                            if i >= start_list[j] and i <= end_list[j]:
-                                cut_line += line[i]
-                                break
-                stdout.append(cut_line)
-
+        for line in lines:
+            start_list = []
+            end_list = []
+            byte_list = []
+            cut_line = ""
+            for p in pattern_list:
+                if "-" in p:
+                    start_i, end_i = p.split("-")
+                    start_i = 1 if start_i == "" else int(start_i)
+                    end_i = len(line) if end_i == "" else int(end_i)
+                    start_list.append(int(start_i) - 1)
+                    end_list.append(int(end_i) - 1)
+                else:
+                    byte_list.append(int(p) - 1)
+            for i in range(len(line)):
+                if i in byte_list:
+                    cut_line += line[i]
+                else:
+                    for j in range(len(start_list)):
+                        if i >= start_list[j] and i <= end_list[j]:
+                            cut_line += line[i]
+                            break
+            stdout.append(cut_line + "\n")
         return stdout
 
 
