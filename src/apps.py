@@ -33,7 +33,7 @@ class Echo(Application):
     def exec(self, args, stdin=None):
         stdout = deque()
         # print(args)
-        stdout.append(" ".join(args) + "\n")
+        stdout.append("".join(args) + "\n")
         return stdout
 
 
@@ -199,8 +199,8 @@ class Cut:
                 for p in pattern_list:
                     if "-" in p:
                         start_i, end_i = p.split("-")
-                        start_i = 1 if start_i == '' else int(start_i)
-                        end_i = len(line) if end_i == '' else int(end_i)
+                        start_i = 1 if start_i == "" else int(start_i)
+                        end_i = len(line) if end_i == "" else int(end_i)
                         start_list.append(int(start_i) - 1)
                         end_list.append(int(end_i) - 1)
                     else:
@@ -235,8 +235,15 @@ class Uniq:
 
         with open(file) as f:
             lines = f.readlines()
-            output = [k for k, g in itertools.groupby(lines)] if not ignore \
-                else [n for i, n in enumerate(lines) if i == 0 or n.casefold() != lines[i - 1].casefold()]
+            output = (
+                [k for k, g in itertools.groupby(lines)]
+                if not ignore
+                else [
+                    n
+                    for i, n in enumerate(lines)
+                    if i == 0 or n.casefold() != lines[i - 1].casefold()
+                ]
+            )
             for i in output:
                 stdout.append(i)
         return stdout
@@ -282,7 +289,7 @@ class Find:
         for path, dirlist, filelist in os.walk(dict):
 
             for name in fnmatch.filter(filelist, pattern):
-                stdout.append(path + '/' + name)
+                stdout.append(path + "/" + name)
             print(stdout)
 
         return stdout
@@ -299,7 +306,9 @@ class NotSupported:
 if __name__ == "__main__":
     print("Pwd", Pwd().exec())
     print("Ls", Ls().exec(args=[]))
-    print("Ls", Ls().exec(args=["F:\\OneDrive\\OneDrive - University College London\\"]))
+    print(
+        "Ls", Ls().exec(args=["F:\\OneDrive\\OneDrive - University College London\\"])
+    )
     print("Cat", Cat().exec(args=["test.txt"]))
     print("Grep", Grep().exec(args=["test file 3*", "test.txt"]))
     print("Head", Head().exec(args=["-n", 3, "test.txt"]))
@@ -307,10 +316,10 @@ if __name__ == "__main__":
     print("Echo", Echo().exec(args=["test"]))
     print("Find local", Find().exec(args=["-name", "parsercombinator.*"]))
     print("Find local", Find().exec(args=["..\doc", "-name", "*.md"]))
-    print("Cut file", Cut().exec(args=["-b", '1-2,-4,8', 'test.txt']))
-    print("Uniq Care case", Uniq().exec(args=['test_abc.txt']))
-    print("Uniq Ignore case", Uniq().exec(args=["-i", 'test_abc.txt']))
-    print("Sort", Sort().exec(args=["-o", 'test_abc.txt']))
+    print("Cut file", Cut().exec(args=["-b", "1-2,-4,8", "test.txt"]))
+    print("Uniq Care case", Uniq().exec(args=["test_abc.txt"]))
+    print("Uniq Ignore case", Uniq().exec(args=["-i", "test_abc.txt"]))
+    print("Sort", Sort().exec(args=["-o", "test_abc.txt"]))
     # args_num = len(sys.argv) - 1
     # if args_num > 0:
     #     if args_num != 2:

@@ -19,7 +19,7 @@ nonKeyWord = regex("[^`\"'\\s;|\n]+").desc("not keyword string")
 @generate
 def singleQuoted():
     content = yield regex("'[^'\n]*'")
-    return content
+    return content[1:-1]
 
 
 @generate

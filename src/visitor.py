@@ -88,7 +88,7 @@ class ASTVisitor(Visitor):
         if n > 1:
             raise Exception("invalid redirection out")  # or other error handling?
 
-        return fs[0] if n == 1 else None  # incase '>' has nothing followed
+        return fs[0] if n == 1 else redirectOut.arg  # incase '>' has nothing followed
 
     def visitCall(self, call, input=None, needPipeReturn=False):
         redirects = call.redirects
@@ -124,7 +124,7 @@ class ASTVisitor(Visitor):
             out = app.exec(args, stdin=stdin)
 
         if stdout:
-            with open(stdout) as f:
+            with open(stdout, "w") as f:
                 while len(out) > 0:
                     line = out.popleft()
                     # print(line)
