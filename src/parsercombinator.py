@@ -4,9 +4,16 @@ from apps import *
 import abstract_syntax_tree
 from operators import *
 
+# from visitor import ASTVisitor
+
 pipeOp = string("|")
 semiOp = string(";")
 nonKeyWord = regex("[^`\"'\\s;|\n]+").desc("not keyword string")
+
+# @generate
+# def backSlash():
+#     content = yield regex()
+#     return
 
 
 @generate
@@ -21,12 +28,24 @@ def backQuoted():
     return abstract_syntax_tree.Substitution(content[1:-1])
 
 
+# double quote doesn't disable back quote
 @generate
 def doubleQuoted():
     yield string('"')
     middle = yield (backQuoted | regex('[^\n`"]')).many()
     yield string('"')
-    return f'"{"".join(middle)}"'
+    index = []
+    for n, i in enumerate(middle):
+        if isinstance(i, abstract_syntax_tree.Substitution):
+            index.append(n)
+
+    # temporitely implement only containing one back quote
+    res = []
+    if len(index) > 0:
+        res.append("".join(middle[: index[0]]))
+        res.append(middle[index[0]])
+        res.append("".join(middle[index[-1] + 1 :]))
+    return res
 
 
 @generate
@@ -76,6 +95,8 @@ def call():
             or type(a) is abstract_syntax_tree.RedirectIn
         ):
             redirections.append(a)
+        elif isinstance(a, list):
+            args.extend(a)
         else:
             args.append(a)
     return abstract_syntax_tree.Call(redirections, callName, args)
@@ -98,7 +119,7 @@ def command():
 
 if __name__ == "__main__":
     # print(command.parse("< *.py call a b \"a\" > out| hello `echo arg` *.py *s.py ; cat a "))
-    print(command.parse("echo hello"))
+    print(command.parse('echo "a `echo "b"`"'))
 
 # space = regex("\s+")
 # optional_space = space.optional()

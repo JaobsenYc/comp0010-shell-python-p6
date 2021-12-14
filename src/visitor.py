@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from abstract_syntax_tree import Call, RedirectIn, RedirectOut
+from abstract_syntax_tree import Call, RedirectIn, RedirectOut, Substitution
 from parsercombinator import command
 from glob import glob
 from appsFactory import AppsFactory
@@ -85,6 +85,10 @@ class ASTVisitor(Visitor):
         if input and not stdin:
             stdin = input
 
+        for arg in args:
+            if isinstance(arg, Substitution):
+                arg = arg.accept(self)
+
         app = factory.getApp(appName)
         if stdin:
             for i in stdin:
@@ -98,7 +102,7 @@ class ASTVisitor(Visitor):
                     line = out.popleft()
                     # print(line)
                     f.write(line)
-        elif not needPipeReturn:
+        elif not needPipeReturn and out:
             while len(out) > 0:
                 line = out.popleft()
                 print(line, end="")
