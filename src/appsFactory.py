@@ -27,6 +27,8 @@ class AppsFactory:
             "grep": Grep(),
             "cut": Cut(),
             "find": Find(),
+            "sort": Sort(),
+            "uniq": Uniq(),
         }
 
     def getApp(self, appName, *remain):
