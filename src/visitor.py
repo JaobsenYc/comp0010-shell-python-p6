@@ -91,7 +91,7 @@ class ASTVisitor(Visitor):
 
         return fs[0] if n == 1 else redirectOut.arg  # incase '>' has nothing followed
 
-    def visitCall(self, call, input=None, needPipeReturn=False):
+    def visitCall(self, call, input=None):
         redirects = call.redirects
         appName = call.appName
         args = call.args
@@ -117,7 +117,7 @@ class ASTVisitor(Visitor):
         # check if args includes double quote that needs to further eval
         for n, arg in enumerate(args):
             if isinstance(arg, DoubleQuote):
-                args[n] = arg.accept(self)
+                args[n] = arg.accept(self).pop()
 
         app = factory.getApp(appName)
 
@@ -127,14 +127,14 @@ class ASTVisitor(Visitor):
 
         # if srdin, concat all files' content as a list
         if stdin:
-            stdin_content = []
+            stdin_content = deque()
             for i in stdin:
                 with open(i) as f:
                     content = ""
                     lines = f.readlines()
                     for line in lines:
                         content += line
-                stdin_content.append(content)
+                stdin_content.extend(content)
         else:
             stdin_content = None
 
@@ -152,26 +152,32 @@ class ASTVisitor(Visitor):
                     line = out.popleft()
                     # print(line)
                     f.write(line)
-        elif not needPipeReturn and out:
-            while len(out) > 0:
-                line = out.popleft()
-                print(line, end="")
-        elif needPipeReturn:
+        # elif not needPipeReturn and out:
+        #     while len(out) > 0:
+        #         line = out.popleft()
+        #         print(line, end="")
+        # elif needPipeReturn:
+        #     return out
+        else:
             return out
 
     def visitSeq(self, seq):
         left = seq.left
         right = seq.right
 
-        left.accept(self)
-        right.accept(self)
+        outLeft = left.accept(self)
+        outRight = right.accept(self)
+
+        return outLeft.extend(outRight)
 
     def visitPipe(self, pipe):  # what if | has redirectOut before?
         left = pipe.left
         right = pipe.right
 
-        outLeft = left.accept(self, needPipeReturn=True)
+        outLeft = left.accept(self)
         outRight = right.accept(self, input=outLeft)
+
+        return outRight
 
 
 if __name__ == "__main__":
