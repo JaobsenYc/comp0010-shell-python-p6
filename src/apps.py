@@ -6,8 +6,6 @@ from collections import deque
 from abc import ABC, abstractmethod
 import fnmatch
 import itertools
-import subprocess
-from subprocess import Popen
 
 
 class Application(ABC):
@@ -71,7 +69,7 @@ class Cat:
 
 class Head:
     def exec(self, args, stdin=None):
-        stdout = deque()
+
         # print(stdin)
         if stdin:
             if len(args) != 0 and len(args) != 2:
@@ -83,10 +81,8 @@ class Head:
                     raise ValueError("wrong flags")
                 else:
                     num_lines = int(args[1])
-            with open(stdin) as f:
-                lines = f.readlines()
-                for i in range(0, min(len(lines), num_lines)):
-                    stdout.append(lines[i])
+            stdout=self.head(stdin)
+
         else:
             if len(args) != 1 and len(args) != 3:
                 raise ValueError("wrong number of command line arguments")
@@ -104,6 +100,13 @@ class Head:
                 for i in range(0, min(len(lines), num_lines)):
                     stdout.append(lines[i])
         return stdout
+
+    def head(self, file):
+        stdout = deque()
+        with open(file) as f:
+            lines = f.readlines()
+            for i in range(0, min(len(lines), num_lines)):
+                stdout.append(lines[i])
 
 
 class Tail:
@@ -191,7 +194,7 @@ class Cut:
             with open(file) as f:
                 # If the cut command uses the -b option, then when executing this command,
                 # cut will sort all the positions after -b from small to large, and then extract them.
-                lines = f.readlines()
+                lines = f.read().splitlines()
 
         for line in lines:
             start_list = []
@@ -215,8 +218,9 @@ class Cut:
                         if i >= start_list[j] and i <= end_list[j]:
                             cut_line += line[i]
                             break
+
             stdout.append(cut_line + "\n")
-        # print(stdout)
+
         return stdout
 
 
@@ -224,6 +228,7 @@ class Uniq:
     def exec(self, args, stdin=None):
         stdout = deque()
         ignore = False
+        # if not stdin:
         if len(args) > 2:
             raise ValueError("wrong number of command line arguments")
         elif len(args) == 2:
@@ -234,42 +239,55 @@ class Uniq:
             file = args[1]
         elif len(args) == 1:
             file = args[0]
-
+            if args[0] == "-i":
+                file = stdin
+                ignore = True
+        else:
+            file = stdin
         with open(file) as f:
             lines = f.readlines()
-            output = (
-                [k for k, g in itertools.groupby(lines)]
-                if not ignore
-                else [
-                    n
-                    for i, n in enumerate(lines)
-                    if i == 0 or n.casefold() != lines[i - 1].casefold()
-                ]
-            )
+            output = [k for k, g in itertools.groupby(lines)] if not ignore \
+                else [n for i, n in enumerate(lines) if i == 0 or n.casefold() != lines[i - 1].casefold()]
             for i in output:
                 stdout.append(i)
+        # else:
+        #     if args[0] != "-i":
+        #         raise ValueError("wrong flags")
+        #     lines = stdin.splitlines()
+        #
+        #     output = [k for k, g in itertools.groupby(lines)] if not ignore \
+        #         else [n for i, n in enumerate(lines) if i == 0 or n.casefold() != lines[i - 1].casefold()]
+        #     for i in output:
+        #         stdout.append(i)
         return stdout
 
 
 class Sort:
     def exec(self, args, stdin=None):
+        reverse = False
         stdout = deque()
         if len(args) > 2:
             raise ValueError("wrong number of command line arguments")
         elif len(args) == 2:
-            if args[0] != "-o":
+            if args[0] != "-r":
                 raise ValueError("wrong flags")
             else:
-                ignore = True
+                reverse = True
             file = args[1]
         elif len(args) == 1:
             file = args[0]
-
+        else:
+            file = stdin
         with open(file) as f:
-            lines = f.readlines()
+            lines = f.read().splitlines()
             lines.sort()
-            for i in lines:
-                stdout.append(i)
+            if reverse:
+                lines.reverse()
+                for i in lines:
+                    stdout.append(i + '\n')
+            else:
+                for i in lines:
+                    stdout.append(i + '\n')
         return stdout
 
 
@@ -288,20 +306,7 @@ class Find:
                 raise ValueError("wrong flags")
             pattern = args[1]
             dict = "."
-        # for path, dirlist, filelist in os.walk(dict):
 
-        #     path1 = path[1:]
-        #     index = path1.find("/")
-        #     path1 = path[: index + 1]
-
-        #     path2 = path[index + 1 :]
-
-        #     if path1 == os.getcwd():
-        #         path = "." + path2
-
-        #     for name in fnmatch.filter(filelist, pattern):
-        #         stdout.append(path + "/" + name + "\n")
-        # print(stdout)
         res = self.helper(pattern, [dict], [])
         for i in res:
             stdout.append(i + "\n")
@@ -334,100 +339,26 @@ class NotSupported:
         raise ValueError(f"unsupported application {self.app_token}")
 
 
-class LocalApp:
-    def _getApp(self, app):
-        existsAndExecutable = os.F_OK | os.X_OK
-        # is path
-        if os.path.dirname(app):
-            # path exists,is accessible, and not a directory
-            if (
-                os.path.exists(app)
-                and os.access(app, existsAndExecutable)
-                and not os.path.isdir(app)
-            ):
-                return app
-            return None
-
-        # get a mess of concatenated system path
-        path = os.environ.get("PATH", None)
-        if path is None:
-            return None
-
-        # Match file system encoding
-        path = os.fsdecode(path)
-        # Split each path into a list
-        path = path.split(os.pathsep)
-
-        possibleExecutable = [app]
-        # windows has to check file extension
-        if sys.platform == "win32":
-            if os.curdir not in path:
-                # add current directory to path so applications are found in current dir
-                path.append(os.curdir)
-
-            pathExtensions = os.getenv("PATHEXT").split(os.pathsep)
-            pathExtensionList = [
-                extension for extension in pathExtensions if extension is not None
-            ]
-
-            for extension in pathExtensionList:
-                if app.lower().endswith(extension.lower()):
-                    possibleExecutable = [app]
-                    break
-            else:
-                possibleExecutable = [
-                    app + extension for extension in pathExtensionList
-                ]
-
-        for p in path:
-            for executable in possibleExecutable:
-                executablePath = os.path.join(os.path.normcase(p), executable)
-                if (
-                    os.path.exists(executablePath)
-                    and os.access(executablePath, existsAndExecutable)
-                    and not os.path.isdir(executablePath)
-                ):
-                    return executablePath
-
-    def exec(self, app, args, stdin=None):
-        stdout = deque()
-        sysApp = self._getApp(app)
-        if sysApp is not None:
-            process = Popen(
-                f"{sysApp} {' '.join(args)}",
-                universal_newlines=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                stdin=subprocess.PIPE,
-            )
-            output, error = process.communicate(input=stdin)
-            if error != "":
-                raise Exception(error)
-            else:
-                stdout.append(output)
-        else:
-            raise Exception(f"No application {app} is found")
-        return stdout
-
-
 if __name__ == "__main__":
-    print("Cut", Cut().exec)
     # print("Pwd", Pwd().exec())
     # print("Ls", Ls().exec(args=[]))
-    # print(
-    #     "Ls", Ls().exec(args=["F:\\OneDrive\\OneDrive - University College London\\"])
-    # )
-    # print("Cat", Cat().exec(args=["test.txt"]))
-    # print("Grep", Grep().exec(args=["test file 3*", "test.txt"]))
+    # print("Ls", Ls().exec(args=["F:\\OneDrive\\OneDrive - University College London\\"]))
+    # print("Cat", Cat().exec(args=["dir1/file1.txt"]))
+    # print("Grep", Grep().exec(args=['A..', "dir1/file1.txt"]))
     # print("Head", Head().exec(args=["-n", 3, "test.txt"]))
     # print("Tail", Tail().exec(args=["-n", 3, "test.txt"]))
     # print("Echo", Echo().exec(args=["test"]))
-    # print("Find local", Find().exec(args=["-name", "parsercombinator.*"]))
-    # print("Find local", Find().exec(args=["..\doc", "-name", "*.md"]))
-    # print("Cut file", Cut().exec(args=["-b", "1-2,-4,8", "test.txt"]))
-    # print("Uniq Care case", Uniq().exec(args=["test_abc.txt"]))
-    # print("Uniq Ignore case", Uniq().exec(args=["-i", "test_abc.txt"]))
-    # print("Sort", Sort().exec(args=["-o", "test_abc.txt"]))
+    print("Find local", Find().exec(args=["-name", "parsercombinator.*"]))
+    print("Find local", Find().exec(args=["dir1", "-name", "*.txt"]))
+    print("Find local", Find().exec(args=["dir1", "-name", "*.txt"]))
+    # print("Cut file", Cut().exec(args=["-b", '1'], stdin="abc"))
+    # print("Cut file", Cut().exec(args=["-b", '1', "dir/file1.txt"]))
+
+    # print("Uniq Care case", Uniq().exec(args=['test_abc.txt']))
+    # print("Uniq Ignore case", Uniq().exec(args=["-i", 'test_abc.txt']))
+    # print("Uniq Care case", Uniq().exec(args=['test_abc.txt']))
+    # print("Uniq Ignore case", Uniq().exec(args=["-i"], stdin='test_abc.txt'))
+    # print("Sort", Sort().exec(args=['dir1/file1.txt']))
     # args_num = len(sys.argv) - 1
     # if args_num > 0:
     #     if args_num != 2:
