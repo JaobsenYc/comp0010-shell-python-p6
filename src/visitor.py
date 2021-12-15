@@ -130,7 +130,7 @@ class ASTVisitor(Visitor):
                 stdin_content.append(content)
             out.extend(app.exec(args), stdin=stdin_content)
         else:
-            out = app.exec(args, stdin=[stdin])
+            out = app.exec(args)
 
         if stdout:
             with open(stdout, "w") as f:
