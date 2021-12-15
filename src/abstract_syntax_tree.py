@@ -79,8 +79,8 @@ class Call(AST):
         self.appName = appName
         self.args = args
 
-    def accept(self, visitor, input=None, needPipeReturn=False):
-        return visitor.visitCall(self, input=input, needPipeReturn=needPipeReturn)
+    def accept(self, visitor, input=None):
+        return visitor.visitCall(self, input=input)
 
     def __str__(self) -> str:
         return f"Call({str(self.redirects)}, {str(self.appName)}, {str(self.args)})"

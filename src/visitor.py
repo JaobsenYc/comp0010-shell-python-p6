@@ -148,10 +148,13 @@ class ASTVisitor(Visitor):
                 else:
                     argsForThisPair.append(args[arg_index])
 
+            if len(args) == 1:
+                argsForThisPair = argsForThisPair[0]
+
             out.extend(app.exec(argsForThisPair, stdin=stdin))
 
         else:
-            out.extend(app.exec(args), stdin=stdin)
+            out.extend(app.exec(args, stdin=stdin))
 
         if redirectOut:
             redirectOut.accept(self, stdin=out)
