@@ -312,6 +312,12 @@ class NotSupported:
         raise ValueError(f"unsupported application {self.app_token}")
 
 
+class LocalApp:
+    def exec(self, out, args):
+
+        return
+
+
 if __name__ == "__main__":
     print("Pwd", Pwd().exec())
     print("Ls", Ls().exec(args=[]))
