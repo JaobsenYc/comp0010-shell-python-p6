@@ -112,16 +112,25 @@ class ASTVisitor(Visitor):
         # otherwise, stdin will overwrite input from last call result piped in
         if input and not stdin:
             stdin = input
+
+        # check if args includes double quote that needs to further eval
         for n, arg in enumerate(args):
             if isinstance(arg, DoubleQuote):
                 args[n] = arg.accept(self)
 
         app = factory.getApp(appName)
         if stdin:
+            stdin_content = []
             for i in stdin:
-                out.extend(app.exec(args, stdin=i))
+                with open(i) as f:
+                    content = ""
+                    lines = f.readlines()
+                    for line in lines:
+                        content += line
+                stdin_content.append(content)
+            out.extend(app.exec(args), stdin=stdin_content)
         else:
-            out = app.exec(args, stdin=stdin)
+            out = app.exec(args, stdin=[stdin])
 
         if stdout:
             with open(stdout, "w") as f:

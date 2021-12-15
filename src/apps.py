@@ -69,7 +69,7 @@ class Cat:
 
 class Head:
     def exec(self, args, stdin=None):
-        stdout = deque()
+
         # print(stdin)
         if stdin:
             if len(args) != 0 and len(args) != 2:
@@ -81,10 +81,8 @@ class Head:
                     raise ValueError("wrong flags")
                 else:
                     num_lines = int(args[1])
-            with open(stdin) as f:
-                lines = f.readlines()
-                for i in range(0, min(len(lines), num_lines)):
-                    stdout.append(lines[i])
+            stdout=self.head(stdin)
+
         else:
             if len(args) != 1 and len(args) != 3:
                 raise ValueError("wrong number of command line arguments")
@@ -102,6 +100,13 @@ class Head:
                 for i in range(0, min(len(lines), num_lines)):
                     stdout.append(lines[i])
         return stdout
+
+    def head(self, file):
+        stdout = deque()
+        with open(file) as f:
+            lines = f.readlines()
+            for i in range(0, min(len(lines), num_lines)):
+                stdout.append(lines[i])
 
 
 class Tail:
@@ -169,6 +174,7 @@ class Grep:
 
 class Cut:
     def exec(self, args, stdin=None):
+        lines = None
         stdout = deque()
         if len(args) > 3:
             raise ValueError("wrong number of command line arguments")
@@ -181,39 +187,39 @@ class Cut:
             if args[0] != "-b":
                 raise ValueError("wrong flags")
             pattern = args[1]
-            cmdline = input()
-            file = cmdline
-        with open(file) as f:
-            pattern_list = pattern.split(",")
+            lines = [stdin.strip()]
 
-            # If the cut command uses the -b option, then when executing this command,
-            # cut will sort all the positions after -b from small to large, and then extract them.
+        pattern_list = pattern.split(",")
+        if not lines:
+            with open(file) as f:
+                # If the cut command uses the -b option, then when executing this command,
+                # cut will sort all the positions after -b from small to large, and then extract them.
+                lines = f.read().splitlines()
 
-            lines = f.readlines()
+        for line in lines:
+            start_list = []
+            end_list = []
+            byte_list = []
+            cut_line = ""
+            for p in pattern_list:
+                if "-" in p:
+                    start_i, end_i = p.split("-")
+                    start_i = 1 if start_i == "" else int(start_i)
+                    end_i = len(line) if end_i == "" else int(end_i)
+                    start_list.append(int(start_i) - 1)
+                    end_list.append(int(end_i) - 1)
+                else:
+                    byte_list.append(int(p) - 1)
+            for i in range(len(line)):
+                if i in byte_list:
+                    cut_line += line[i]
+                else:
+                    for j in range(len(start_list)):
+                        if i >= start_list[j] and i <= end_list[j]:
+                            cut_line += line[i]
+                            break
 
-            for line in lines:
-                start_list = []
-                end_list = []
-                byte_list = []
-                cut_line = ""
-                for p in pattern_list:
-                    if "-" in p:
-                        start_i, end_i = p.split("-")
-                        start_i = 1 if start_i == '' else int(start_i)
-                        end_i = len(line) if end_i == '' else int(end_i)
-                        start_list.append(int(start_i) - 1)
-                        end_list.append(int(end_i) - 1)
-                    else:
-                        byte_list.append(int(p) - 1)
-                for i in range(len(line)):
-                    if i in byte_list:
-                        cut_line += line[i]
-                    else:
-                        for j in range(len(start_list)):
-                            if i >= start_list[j] and i <= end_list[j]:
-                                cut_line += line[i]
-                                break
-                stdout.append(cut_line)
+            stdout.append(cut_line + "\n")
 
         return stdout
 
@@ -222,6 +228,7 @@ class Uniq:
     def exec(self, args, stdin=None):
         stdout = deque()
         ignore = False
+        # if not stdin:
         if len(args) > 2:
             raise ValueError("wrong number of command line arguments")
         elif len(args) == 2:
@@ -232,13 +239,26 @@ class Uniq:
             file = args[1]
         elif len(args) == 1:
             file = args[0]
-
+            if args[0] == "-i":
+                file = stdin
+                ignore = True
+        else:
+            file = stdin
         with open(file) as f:
             lines = f.readlines()
             output = [k for k, g in itertools.groupby(lines)] if not ignore \
                 else [n for i, n in enumerate(lines) if i == 0 or n.casefold() != lines[i - 1].casefold()]
             for i in output:
                 stdout.append(i)
+        # else:
+        #     if args[0] != "-i":
+        #         raise ValueError("wrong flags")
+        #     lines = stdin.splitlines()
+        #
+        #     output = [k for k, g in itertools.groupby(lines)] if not ignore \
+        #         else [n for i, n in enumerate(lines) if i == 0 or n.casefold() != lines[i - 1].casefold()]
+        #     for i in output:
+        #         stdout.append(i)
         return stdout
 
 
@@ -256,7 +276,8 @@ class Sort:
             file = args[1]
         elif len(args) == 1:
             file = args[0]
-
+        else:
+            file = stdin
         with open(file) as f:
             lines = f.read().splitlines()
             lines.sort()
@@ -284,13 +305,30 @@ class Find:
             if args[0] != "-name":
                 raise ValueError("wrong flags")
             pattern = args[1]
-            dict = os.getcwd()
-        for path, dirlist, filelist in os.walk(dict):
+            dict = "."
 
-            for name in fnmatch.filter(filelist, pattern):
-                stdout.append(path + '/' + name)
+        res = self.helper(pattern, [dict], [])
+        for i in res:
+            stdout.append(i + "\n")
 
         return stdout
+
+    def helper(self, pattern, stack, res):
+        while stack:
+
+            current = stack.pop()
+            dirs = os.listdir(current)
+            # print(current, dirs)
+
+            for d in dirs:
+                d1 = os.path.join(current, d)
+                if not os.path.isdir(d1):
+                    if fnmatch.fnmatch(d, pattern):
+                        res.append("/".join([current, d]))
+                elif os.path.isdir(d1):
+                    stack.append("/".join([current, d]))
+
+        return res
 
 
 class NotSupported:
@@ -310,11 +348,16 @@ if __name__ == "__main__":
     # print("Head", Head().exec(args=["-n", 3, "test.txt"]))
     # print("Tail", Tail().exec(args=["-n", 3, "test.txt"]))
     # print("Echo", Echo().exec(args=["test"]))
-    # print("Find local", Find().exec(args=["-name", "parsercombinator.*"]))
-    # print("Find local", Find().exec(args=["dir1", "-name", "*.txt"]))
-    print("Cut file", Cut().exec(args=["-b", '1', 'dir1/file1.txt']))
+    print("Find local", Find().exec(args=["-name", "parsercombinator.*"]))
+    print("Find local", Find().exec(args=["dir1", "-name", "*.txt"]))
+    print("Find local", Find().exec(args=["dir1", "-name", "*.txt"]))
+    # print("Cut file", Cut().exec(args=["-b", '1'], stdin="abc"))
+    # print("Cut file", Cut().exec(args=["-b", '1', "dir/file1.txt"]))
+
     # print("Uniq Care case", Uniq().exec(args=['test_abc.txt']))
     # print("Uniq Ignore case", Uniq().exec(args=["-i", 'test_abc.txt']))
+    # print("Uniq Care case", Uniq().exec(args=['test_abc.txt']))
+    # print("Uniq Ignore case", Uniq().exec(args=["-i"], stdin='test_abc.txt'))
     # print("Sort", Sort().exec(args=['dir1/file1.txt']))
     # args_num = len(sys.argv) - 1
     # if args_num > 0:
