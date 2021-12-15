@@ -19,7 +19,7 @@ nonKeyWord = regex("[^`\"'\\s;|\n]+").desc("not keyword string")
 @generate
 def singleQuoted():
     content = yield regex("'[^'\n]*'")
-    return content[1:-1]
+    return abstract_syntax_tree.SingleQuote(content[1:-1])
 
 
 @generate
@@ -41,13 +41,6 @@ def doubleQuoted():
             hasSub = True
             break
 
-    # temporitely implement only containing one back quote
-    # res = []
-    # if len(index) > 0:
-    #     res.append("".join(middle[: index[0]]))
-    #     res.append(middle[index[0]])
-    #     res.append("".join(middle[index[-1] + 1 :]))
-    # return res
     return abstract_syntax_tree.DoubleQuote(middle, hasSub)
 
 

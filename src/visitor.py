@@ -5,15 +5,21 @@ from abstract_syntax_tree import (
     DoubleQuote,
     RedirectIn,
     RedirectOut,
+    SingleQuote,
     Substitution,
 )
 from parsercombinator import command
 from glob import glob
 from appsFactory import AppsFactory
 from collections import deque
+from itertools import product
 
 
 class Visitor(ABC):
+    @abstractmethod
+    def visitSingleQuote(self, singleQuote):
+        pass
+
     @abstractmethod
     def visitDoubleQuote(self, doubleQuote):
         pass
@@ -45,8 +51,9 @@ class Visitor(ABC):
 
 # @singleton # or use an instance?
 class ASTVisitor(Visitor):
-    # def __init__(self):
-    #     factory = AppsFactory()
+    # def visitSingleQuote(self, singleQuote):
+    #     quotedPart = singleQuote.quotedPart
+
     def visitDoubleQuote(self, doubleQuote):
         containSubstitution, quotedPart = (
             doubleQuote.containSubstitution,
@@ -81,11 +88,7 @@ class ASTVisitor(Visitor):
 
         for i in fs:
             with open(i) as f:
-                content = ""
-                lines = f.readlines()
-                for line in lines:
-                    content += line
-            out.extend(content)
+                out.extend(f.readlines())
 
         return out
 
@@ -109,6 +112,8 @@ class ASTVisitor(Visitor):
 
         stdin, redirectOut = None, None
         out = deque()
+        glob_index = []
+        globbed_result = []
 
         factory = AppsFactory()
 
@@ -125,21 +130,30 @@ class ASTVisitor(Visitor):
             stdin = input
 
         # check if args includes double quote that needs to further eval
+        # check glob in args
         for n, arg in enumerate(args):
             if isinstance(arg, DoubleQuote):
                 args[n] = arg.accept(self).pop()
+            elif not isinstance(arg, SingleQuote) and "*" in arg:
+                glob_index.append(n)
+                globbed_result.append(glob(arg))
 
         app = factory.getApp(appName)
 
-        # check glob in args
-        if "*" in args[-1]:
-            files = glob(args[-1])
+        # in case have multiple glob
+        glob_pairs = product(globbed_result)
 
-        if files:
-            for file_arg in files:
-                args_new = args[: len(args) - 1]
-                args_new.append(file_arg)
-                out.extend(app.exec(args_new, stdin=stdin))
+        count = 0
+        for pair in glob_pairs:
+            argsForThisPair = []
+            for arg_index in range(len(args)):
+                if arg_index in glob_index:
+                    argsForThisPair.append(pair[count])
+                else:
+                    argsForThisPair.append(args[arg_index])
+
+            out.extend(app.exec(argsForThisPair, stdin=stdin))
+
         else:
             out.extend(app.exec(args), stdin=stdin)
 
