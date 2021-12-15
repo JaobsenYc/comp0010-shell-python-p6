@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from posixpath import supports_unicode_filenames
 from abstract_syntax_tree import (
     Call,
     DoubleQuote,
@@ -119,6 +120,12 @@ class ASTVisitor(Visitor):
                 args[n] = arg.accept(self)
 
         app = factory.getApp(appName)
+
+        # check glob in args
+        if "*" in args[-1]:
+            files = glob(args[-1])
+
+        # if srdin, concat all files' content as a list
         if stdin:
             stdin_content = []
             for i in stdin:
@@ -128,9 +135,16 @@ class ASTVisitor(Visitor):
                     for line in lines:
                         content += line
                 stdin_content.append(content)
-            out.extend(app.exec(args), stdin=stdin_content)
         else:
-            out = app.exec(args)
+            stdin_content = None
+
+        if files:
+            for file_arg in files:
+                args_new = args[: len(args) - 1]
+                args_new.append(file_arg)
+                out.extend(app.exec(args_new, stdin=stdin_content))
+        else:
+            out.extend(app.exec(args), stdin=stdin_content)
 
         if stdout:
             with open(stdout, "w") as f:

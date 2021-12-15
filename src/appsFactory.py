@@ -27,7 +27,6 @@ class AppsFactory:
             "grep": Grep(),
             "cut": Cut(),
             "find": Find(),
-            "localApp": LocalApp(),
         }
 
     def getApp(self, appName, *remain):
@@ -40,5 +39,5 @@ class AppsFactory:
         # else:
         #     cls = self.menu[appName]
 
-        app = self.menu.get(appName, NotSupported(appName))
+        app = self.menu.get(appName, LocalApp(appName))
         return app

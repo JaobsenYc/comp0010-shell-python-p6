@@ -33,6 +33,7 @@ class Cd(Application):
 
 class Echo(Application):
     def exec(self, args, stdin=None):
+        # print("Echo: ", args)
         stdout = deque()
         # print(args)
         stdout.append(" ".join(args) + "\n")
@@ -335,7 +336,11 @@ class NotSupported:
 
 
 class LocalApp:
-    def _getApp(self, app):
+    def __init__(self, appName):
+        self.app = appName
+
+    def _getApp(self):
+        app = self.app
         existsAndExecutable = os.F_OK | os.X_OK
         # is path
         if os.path.dirname(app):
@@ -389,7 +394,8 @@ class LocalApp:
                 ):
                     return executablePath
 
-    def exec(self, app, args, stdin=None):
+    def exec(self, args, stdin=None):
+        app = self.app
         stdout = deque()
         sysApp = self._getApp(app)
         if sysApp is not None:
