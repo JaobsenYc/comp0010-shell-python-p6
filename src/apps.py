@@ -214,7 +214,7 @@ class Cut:
                             cut_line += line[i]
                             break
             stdout.append(cut_line + "\n")
-        print(stdout)
+        #print(stdout)
         return stdout
 
 
