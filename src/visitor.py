@@ -136,23 +136,23 @@ class ASTVisitor(Visitor):
 
         app = factory.getApp(appName)
 
-        # in case have multiple glob
-        glob_pairs = product(globbed_result)
+        if len(glob_index) > 0:
+            # in case have multiple glob
+            glob_pairs = product(globbed_result)
 
-        count = 0
-        for pair in glob_pairs:
-            argsForThisPair = []
-            for arg_index in range(len(args)):
-                if arg_index in glob_index:
-                    argsForThisPair.append(pair[count])
-                else:
-                    argsForThisPair.append(args[arg_index])
+            count = 0
+            for pair in glob_pairs:
+                argsForThisPair = []
+                for arg_index in range(len(args)):
+                    if arg_index in glob_index:
+                        argsForThisPair.append(pair[count])
+                    else:
+                        argsForThisPair.append(args[arg_index])
 
-            if len(args) == 1:
-                argsForThisPair = argsForThisPair[0]
+                if len(args) == 1:
+                    argsForThisPair = argsForThisPair[0]
 
-            out.extend(app.exec(argsForThisPair, stdin=stdin))
-
+                out.extend(app.exec(argsForThisPair, stdin=stdin))
         else:
             out.extend(app.exec(args, stdin=stdin))
 
