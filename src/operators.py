@@ -16,6 +16,8 @@ class Expression:
             "head": Head(),
             "tail": Tail(),
             "grep": Grep(),
+            "sort": Sort(),
+            "uniq": uniq(),
         }.get(app_token, NotSupported(app_token))
         app.exec(out, args)
 

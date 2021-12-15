@@ -169,7 +169,6 @@ class Grep:
 
 class Cut:
     def exec(self, args, stdin=None):
-        lines = None
         stdout = deque()
         if len(args) > 3:
             raise ValueError("wrong number of command line arguments")
@@ -182,39 +181,40 @@ class Cut:
             if args[0] != "-b":
                 raise ValueError("wrong flags")
             pattern = args[1]
-            lines = [stdin.strip()]
+            cmdline = input()
+            file = cmdline
+        with open(file) as f:
+            pattern_list = pattern.split(",")
 
-        pattern_list = pattern.split(",")
-        if not lines:
-            with open(file) as f:
-                # If the cut command uses the -b option, then when executing this command,
-                # cut will sort all the positions after -b from small to large, and then extract them.
-                lines = f.readlines()
+            # If the cut command uses the -b option, then when executing this command,
+            # cut will sort all the positions after -b from small to large, and then extract them.
 
-        for line in lines:
-            start_list = []
-            end_list = []
-            byte_list = []
-            cut_line = ""
-            for p in pattern_list:
-                if "-" in p:
-                    start_i, end_i = p.split("-")
-                    start_i = 1 if start_i == "" else int(start_i)
-                    end_i = len(line) if end_i == "" else int(end_i)
-                    start_list.append(int(start_i) - 1)
-                    end_list.append(int(end_i) - 1)
-                else:
-                    byte_list.append(int(p) - 1)
-            for i in range(len(line)):
-                if i in byte_list:
-                    cut_line += line[i]
-                else:
-                    for j in range(len(start_list)):
-                        if i >= start_list[j] and i <= end_list[j]:
-                            cut_line += line[i]
-                            break
-            stdout.append(cut_line + "\n")
-        print(stdout)
+            lines = f.readlines()
+
+            for line in lines:
+                start_list = []
+                end_list = []
+                byte_list = []
+                cut_line = ""
+                for p in pattern_list:
+                    if "-" in p:
+                        start_i, end_i = p.split("-")
+                        start_i = 1 if start_i == '' else int(start_i)
+                        end_i = len(line) if end_i == '' else int(end_i)
+                        start_list.append(int(start_i) - 1)
+                        end_list.append(int(end_i) - 1)
+                    else:
+                        byte_list.append(int(p) - 1)
+                for i in range(len(line)):
+                    if i in byte_list:
+                        cut_line += line[i]
+                    else:
+                        for j in range(len(start_list)):
+                            if i >= start_list[j] and i <= end_list[j]:
+                                cut_line += line[i]
+                                break
+                stdout.append(cut_line)
+
         return stdout
 
 
@@ -235,15 +235,8 @@ class Uniq:
 
         with open(file) as f:
             lines = f.readlines()
-            output = (
-                [k for k, g in itertools.groupby(lines)]
-                if not ignore
-                else [
-                    n
-                    for i, n in enumerate(lines)
-                    if i == 0 or n.casefold() != lines[i - 1].casefold()
-                ]
-            )
+            output = [k for k, g in itertools.groupby(lines)] if not ignore \
+                else [n for i, n in enumerate(lines) if i == 0 or n.casefold() != lines[i - 1].casefold()]
             for i in output:
                 stdout.append(i)
         return stdout
@@ -251,23 +244,29 @@ class Uniq:
 
 class Sort:
     def exec(self, args, stdin=None):
+        reverse = False
         stdout = deque()
         if len(args) > 2:
             raise ValueError("wrong number of command line arguments")
         elif len(args) == 2:
-            if args[0] != "-o":
+            if args[0] != "-r":
                 raise ValueError("wrong flags")
             else:
-                ignore = True
+                reverse = True
             file = args[1]
         elif len(args) == 1:
             file = args[0]
 
         with open(file) as f:
-            lines = f.readlines()
+            lines = f.read().splitlines()
             lines.sort()
-            for i in lines:
-                stdout.append(i)
+            if reverse:
+                lines.reverse()
+                for i in lines:
+                    stdout.append(i + '\n')
+            else:
+                for i in lines:
+                    stdout.append(i + '\n')
         return stdout
 
 
@@ -288,18 +287,8 @@ class Find:
             dict = os.getcwd()
         for path, dirlist, filelist in os.walk(dict):
 
-            path1 = path[1:]
-            index = path1.find("/")
-            path1 = path[: index + 1]
-
-            path2 = path[index + 1 :]
-
-            if path1 == os.getcwd():
-                path = "." + path2
-
             for name in fnmatch.filter(filelist, pattern):
-                stdout.append(path + "/" + name + "\n")
-            # print(stdout)
+                stdout.append(path + '/' + name)
 
         return stdout
 
@@ -312,29 +301,21 @@ class NotSupported:
         raise ValueError(f"unsupported application {self.app_token}")
 
 
-class LocalApp:
-    def exec(self, out, args):
-
-        return
-
-
 if __name__ == "__main__":
-    print("Pwd", Pwd().exec())
-    print("Ls", Ls().exec(args=[]))
-    print(
-        "Ls", Ls().exec(args=["F:\\OneDrive\\OneDrive - University College London\\"])
-    )
-    print("Cat", Cat().exec(args=["test.txt"]))
-    print("Grep", Grep().exec(args=["test file 3*", "test.txt"]))
-    print("Head", Head().exec(args=["-n", 3, "test.txt"]))
-    print("Tail", Tail().exec(args=["-n", 3, "test.txt"]))
-    print("Echo", Echo().exec(args=["test"]))
-    print("Find local", Find().exec(args=["-name", "parsercombinator.*"]))
-    print("Find local", Find().exec(args=["..\doc", "-name", "*.md"]))
-    print("Cut file", Cut().exec(args=["-b", "1-2,-4,8", "test.txt"]))
-    print("Uniq Care case", Uniq().exec(args=["test_abc.txt"]))
-    print("Uniq Ignore case", Uniq().exec(args=["-i", "test_abc.txt"]))
-    print("Sort", Sort().exec(args=["-o", "test_abc.txt"]))
+    # print("Pwd", Pwd().exec())
+    # print("Ls", Ls().exec(args=[]))
+    # print("Ls", Ls().exec(args=["F:\\OneDrive\\OneDrive - University College London\\"]))
+    # print("Cat", Cat().exec(args=["dir1/file1.txt"]))
+    # print("Grep", Grep().exec(args=['A..', "dir1/file1.txt"]))
+    # print("Head", Head().exec(args=["-n", 3, "test.txt"]))
+    # print("Tail", Tail().exec(args=["-n", 3, "test.txt"]))
+    # print("Echo", Echo().exec(args=["test"]))
+    # print("Find local", Find().exec(args=["-name", "parsercombinator.*"]))
+    # print("Find local", Find().exec(args=["dir1", "-name", "*.txt"]))
+    print("Cut file", Cut().exec(args=["-b", '1', 'dir1/file1.txt']))
+    # print("Uniq Care case", Uniq().exec(args=['test_abc.txt']))
+    # print("Uniq Ignore case", Uniq().exec(args=["-i", 'test_abc.txt']))
+    # print("Sort", Sort().exec(args=['dir1/file1.txt']))
     # args_num = len(sys.argv) - 1
     # if args_num > 0:
     #     if args_num != 2:
