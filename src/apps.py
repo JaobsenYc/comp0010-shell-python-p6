@@ -214,7 +214,7 @@ class Cut:
                             cut_line += line[i]
                             break
             stdout.append(cut_line + "\n")
-        #print(stdout)
+        # print(stdout)
         return stdout
 
 
@@ -285,23 +285,43 @@ class Find:
             if args[0] != "-name":
                 raise ValueError("wrong flags")
             pattern = args[1]
-            dict = os.getcwd()
-        for path, dirlist, filelist in os.walk(dict):
+            dict = "."
+        # for path, dirlist, filelist in os.walk(dict):
 
-            path1 = path[1:]
-            index = path1.find("/")
-            path1 = path[: index + 1]
+        #     path1 = path[1:]
+        #     index = path1.find("/")
+        #     path1 = path[: index + 1]
 
-            path2 = path[index + 1 :]
+        #     path2 = path[index + 1 :]
 
-            if path1 == os.getcwd():
-                path = "." + path2
+        #     if path1 == os.getcwd():
+        #         path = "." + path2
 
-            for name in fnmatch.filter(filelist, pattern):
-                stdout.append(path + "/" + name + "\n")
-            # print(stdout)
+        #     for name in fnmatch.filter(filelist, pattern):
+        #         stdout.append(path + "/" + name + "\n")
+        # print(stdout)
+        res = self.helper(pattern, [dict], [])
+        for i in res:
+            stdout.append(i + "\n")
 
         return stdout
+
+    def helper(self, pattern, stack, res):
+        while stack:
+
+            current = stack.pop()
+            dirs = os.listdir(current)
+            # print(current, dirs)
+
+            for d in dirs:
+                d1 = os.path.join(current, d)
+                if not os.path.isdir(d1):
+                    if fnmatch.fnmatch(d, pattern):
+                        res.append("/".join([current, d]))
+                elif os.path.isdir(d1):
+                    stack.append("/".join([current, d]))
+
+        return res
 
 
 class NotSupported:
@@ -319,22 +339,23 @@ class LocalApp:
 
 
 if __name__ == "__main__":
-    print("Pwd", Pwd().exec())
-    print("Ls", Ls().exec(args=[]))
-    print(
-        "Ls", Ls().exec(args=["F:\\OneDrive\\OneDrive - University College London\\"])
-    )
-    print("Cat", Cat().exec(args=["test.txt"]))
-    print("Grep", Grep().exec(args=["test file 3*", "test.txt"]))
-    print("Head", Head().exec(args=["-n", 3, "test.txt"]))
-    print("Tail", Tail().exec(args=["-n", 3, "test.txt"]))
-    print("Echo", Echo().exec(args=["test"]))
-    print("Find local", Find().exec(args=["-name", "parsercombinator.*"]))
-    print("Find local", Find().exec(args=["..\doc", "-name", "*.md"]))
-    print("Cut file", Cut().exec(args=["-b", "1-2,-4,8", "test.txt"]))
-    print("Uniq Care case", Uniq().exec(args=["test_abc.txt"]))
-    print("Uniq Ignore case", Uniq().exec(args=["-i", "test_abc.txt"]))
-    print("Sort", Sort().exec(args=["-o", "test_abc.txt"]))
+    print("Cut", Cut().exec)
+    # print("Pwd", Pwd().exec())
+    # print("Ls", Ls().exec(args=[]))
+    # print(
+    #     "Ls", Ls().exec(args=["F:\\OneDrive\\OneDrive - University College London\\"])
+    # )
+    # print("Cat", Cat().exec(args=["test.txt"]))
+    # print("Grep", Grep().exec(args=["test file 3*", "test.txt"]))
+    # print("Head", Head().exec(args=["-n", 3, "test.txt"]))
+    # print("Tail", Tail().exec(args=["-n", 3, "test.txt"]))
+    # print("Echo", Echo().exec(args=["test"]))
+    # print("Find local", Find().exec(args=["-name", "parsercombinator.*"]))
+    # print("Find local", Find().exec(args=["..\doc", "-name", "*.md"]))
+    # print("Cut file", Cut().exec(args=["-b", "1-2,-4,8", "test.txt"]))
+    # print("Uniq Care case", Uniq().exec(args=["test_abc.txt"]))
+    # print("Uniq Ignore case", Uniq().exec(args=["-i", "test_abc.txt"]))
+    # print("Sort", Sort().exec(args=["-o", "test_abc.txt"]))
     # args_num = len(sys.argv) - 1
     # if args_num > 0:
     #     if args_num != 2:
