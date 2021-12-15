@@ -11,9 +11,6 @@ class SingleQuote(AST):
     def __init__(self, quotedPart):
         self.quotedPart = quotedPart
 
-    # def accept(self, visitor):
-    #     return visitor.visitSingleQuote(self)
-
 
 class DoubleQuote(AST):
     def __init__(self, quotedPart, containSubstitution):

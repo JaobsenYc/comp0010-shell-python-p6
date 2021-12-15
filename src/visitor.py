@@ -17,10 +17,6 @@ from itertools import product
 
 class Visitor(ABC):
     @abstractmethod
-    def visitSingleQuote(self, singleQuote):
-        pass
-
-    @abstractmethod
     def visitDoubleQuote(self, doubleQuote):
         pass
 
