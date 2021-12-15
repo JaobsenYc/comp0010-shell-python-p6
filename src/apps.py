@@ -25,7 +25,7 @@ class Pwd(Application):
 
 class Cd(Application):
     def exec(self, args, stdin=None):
-        stdout=deque()
+        stdout = deque()
         if len(args) == 0 or len(args) > 1:
             raise ValueError("wrong number of command line arguments")
         os.chdir(args[0])
@@ -74,7 +74,7 @@ class Cat:
 
 class Head:
     def exec(self, args, stdin=None):
-        stdout=deque()
+        stdout = deque()
         # print(stdin)
         if stdin:
             if len(args) != 0 and len(args) != 2:
@@ -194,7 +194,10 @@ class Cut:
             if args[0] != "-b":
                 raise ValueError("wrong flags")
             pattern = args[1]
-            lines = [stdin.strip()]
+            # input="".join(stdin)
+            input = stdin.pop()
+            print("输入", input)
+            lines = [input.strip()]
 
         pattern_list = pattern.split(",")
         if not lines:
