@@ -73,14 +73,19 @@ class ASTVisitor(Visitor):
         return out
 
     def visitRedirectIn(self, redirectIn):
-        out = ""
+        out = deque()
 
         fs = glob(redirectIn.arg)
-        # for file in fs:
-        #     with open(file) as f:
-        #         content = f.read()
-        #         out += content  # Do we need spaces or not?
-        return fs
+
+        for i in fs:
+            with open(i) as f:
+                content = ""
+                lines = f.readlines()
+                for line in lines:
+                    content += line
+            out.extend(content)
+
+        return out
 
     def visitRedirectOut(self, redirectOut):
         fs = glob(redirectOut.arg)
@@ -125,39 +130,19 @@ class ASTVisitor(Visitor):
         if "*" in args[-1]:
             files = glob(args[-1])
 
-        # if srdin, concat all files' content as a list
-        if stdin:
-            stdin_content = deque()
-            for i in stdin:
-                with open(i) as f:
-                    content = ""
-                    lines = f.readlines()
-                    for line in lines:
-                        content += line
-                stdin_content.extend(content)
-        else:
-            stdin_content = None
-
         if files:
             for file_arg in files:
                 args_new = args[: len(args) - 1]
                 args_new.append(file_arg)
-                out.extend(app.exec(args_new, stdin=stdin_content))
+                out.extend(app.exec(args_new, stdin=stdin))
         else:
-            out.extend(app.exec(args), stdin=stdin_content)
+            out.extend(app.exec(args), stdin=stdin)
 
         if stdout:
             with open(stdout, "w") as f:
                 while len(out) > 0:
                     line = out.popleft()
-                    # print(line)
                     f.write(line)
-        # elif not needPipeReturn and out:
-        #     while len(out) > 0:
-        #         line = out.popleft()
-        #         print(line, end="")
-        # elif needPipeReturn:
-        #     return out
         else:
             return out
 
