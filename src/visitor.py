@@ -168,7 +168,8 @@ class ASTVisitor(Visitor):
         outLeft = left.accept(self)
         outRight = right.accept(self)
 
-        return outLeft.extend(outRight)
+        outLeft.extend(outRight)
+        return outLeft
 
     def visitPipe(self, pipe):  # what if | has redirectOut before?
         left = pipe.left
