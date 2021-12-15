@@ -6,6 +6,8 @@ from collections import deque
 from abc import ABC, abstractmethod
 import fnmatch
 import itertools
+import subprocess
+from subprocess import Popen
 
 
 class Application(ABC):
@@ -214,7 +216,7 @@ class Cut:
                             cut_line += line[i]
                             break
             stdout.append(cut_line + "\n")
-        #print(stdout)
+        # print(stdout)
         return stdout
 
 
@@ -313,9 +315,79 @@ class NotSupported:
 
 
 class LocalApp:
-    def exec(self, out, args):
+    def _getApp(self, app):
+        existsAndExecutable = os.F_OK | os.X_OK
+        # is path
+        if os.path.dirname(app):
+            # path exists,is accessible, and not a directory
+            if (
+                os.path.exists(app)
+                and os.access(app, existsAndExecutable)
+                and not os.path.isdir(app)
+            ):
+                return app
+            return None
 
-        return
+        # get a mess of concatenated system path
+        path = os.environ.get("PATH", None)
+        if path is None:
+            return None
+
+        # Match file system encoding
+        path = os.fsdecode(path)
+        # Split each path into a list
+        path = path.split(os.pathsep)
+
+        possibleExecutable = [app]
+        # windows has to check file extension
+        if sys.platform == "win32":
+            if os.curdir not in path:
+                # add current directory to path so applications are found in current dir
+                path.append(os.curdir)
+
+            pathExtensions = os.getenv("PATHEXT").split(os.pathsep)
+            pathExtensionList = [
+                extension for extension in pathExtensions if extension is not None
+            ]
+
+            for extension in pathExtensionList:
+                if app.lower().endswith(extension.lower()):
+                    possibleExecutable = [app]
+                    break
+            else:
+                possibleExecutable = [
+                    app + extension for extension in pathExtensionList
+                ]
+
+        for p in path:
+            for executable in possibleExecutable:
+                executablePath = os.path.join(os.path.normcase(p), executable)
+                if (
+                    os.path.exists(executablePath)
+                    and os.access(executablePath, existsAndExecutable)
+                    and not os.path.isdir(executablePath)
+                ):
+                    return executablePath
+
+    def exec(self, app, args, stdin=None):
+        stdout = deque()
+        sysApp = self._getApp(app)
+        if sysApp is not None:
+            process = Popen(
+                f"{sysApp} {' '.join(args)}",
+                universal_newlines=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                stdin=subprocess.PIPE,
+            )
+            output, error = process.communicate(input=stdin)
+            if error != "":
+                raise Exception(error)
+            else:
+                stdout.append(output)
+        else:
+            raise Exception(f"No application {app} is found")
+        return stdout
 
 
 if __name__ == "__main__":
