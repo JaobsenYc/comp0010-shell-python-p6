@@ -8,18 +8,17 @@ class AST(ABC):
 
 
 class DoubleQuote(AST):
-    def __init__(self, quoted, hasSub):
-        self.quoted = quoted
-        self.hasSub = hasSub
+    def __init__(self, quotedPart, containSubstitution):
+        self.containSubstitution, self.quotedPart = containSubstitution, quotedPart
 
     def accept(self, visitor):
         return visitor.visitDoubleQuote(self)
 
     def __str__(self):
-        return "DoubleQ({})".format(str(self.quoted))
+        return "DoubleQ({})".format(str(self.quotedPart))
 
     def __repr__(self):
-        return "DoubleQ({})".format(str(self.quoted))
+        return "DoubleQ({})".format(str(self.quotedPart))
 
 
 class Substitution(AST):
@@ -55,7 +54,7 @@ class RedirectOut(AST):
     def __init__(self, arg) -> None:
         self.arg = arg
 
-    def accept(self, visitor):
+    def accept(self, visitor, stdin=None):
         return visitor.visitRedirectOut(self)
 
     def __str__(self) -> str:

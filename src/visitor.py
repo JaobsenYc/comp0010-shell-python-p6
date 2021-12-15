@@ -48,19 +48,21 @@ class ASTVisitor(Visitor):
     # def __init__(self):
     #     factory = AppsFactory()
     def visitDoubleQuote(self, doubleQuote):
-        hasSub = doubleQuote.hasSub
-        quoted = doubleQuote.quoted
+        containSubstitution, quotedPart = (
+            doubleQuote.containSubstitution,
+            doubleQuote.quotedPart,
+        )
 
         res = ""
 
-        if not hasSub:
-            res = "{}".format("".join(quoted))
+        if not containSubstitution:
+            res = "{}".format("".join(quotedPart))
         else:
-            for i in quoted:
-                if not isinstance(i, Substitution):
-                    res += i
+            for part in quotedPart:
+                if not isinstance(part, Substitution):
+                    res += part
                 else:
-                    out = i.accept(self)
+                    out = part.accept(self)
                     while len(out) > 0:
                         line = out.popleft()
                         res += line
@@ -87,21 +89,25 @@ class ASTVisitor(Visitor):
 
         return out
 
-    def visitRedirectOut(self, redirectOut):
-        fs = glob(redirectOut.arg)
+    def visitRedirectOut(self, redirectOut, stdin=None):
+        fs = glob(redirectOut.arg) or [redirectOut.arg]
         n = len(fs)
 
         if n > 1:
             raise Exception("invalid redirection out")  # or other error handling?
 
-        return fs[0] if n == 1 else redirectOut.arg  # incase '>' has nothing followed
+        stdout_f = fs[0]
+        with open(stdout_f, "w") as f:
+            while len(stdin) > 0:
+                line = stdin.popleft()
+                f.write(line)
 
     def visitCall(self, call, input=None):
         redirects = call.redirects
         appName = call.appName
         args = call.args
 
-        stdin, stdout = None, None
+        stdin, redirectOut = None, None
         out = deque()
 
         factory = AppsFactory()
@@ -109,9 +115,8 @@ class ASTVisitor(Visitor):
         for r in redirects:
             if isinstance(r, RedirectIn) and not stdin:  # check type
                 stdin = r.accept(self)
-                # print(stdin)
-            elif isinstance(r, RedirectOut) and not stdout:
-                stdout = r.accept(self)
+            elif isinstance(r, RedirectOut) and not redirectOut:
+                redirectOut = r
             else:
                 raise Exception("invalid redirections")
 
@@ -138,11 +143,8 @@ class ASTVisitor(Visitor):
         else:
             out.extend(app.exec(args), stdin=stdin)
 
-        if stdout:
-            with open(stdout, "w") as f:
-                while len(out) > 0:
-                    line = out.popleft()
-                    f.write(line)
+        if redirectOut:
+            redirectOut.accept(self, stdin=out)
         else:
             return out
 

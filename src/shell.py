@@ -19,7 +19,7 @@ if __name__ == "__main__":
             raise ValueError(f"unexpected command line argument {sys.argv[1]}")
         seq = command.parse(sys.argv[2])
         # print("sit1: " + str(seq))
-        seq.accept(visitor)
+        out = seq.accept(visitor)
 
     else:
         while True:
@@ -27,4 +27,8 @@ if __name__ == "__main__":
             cmdline = input()
             seq = command.parse(cmdline)
             # print("sit2: " + cmdline)
-            seq.accept(visitor)
+            out = seq.accept(visitor)
+
+    while len(out) > 0:
+        line = out.popleft()
+        print(line, end="")
