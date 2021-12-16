@@ -253,8 +253,15 @@ class Uniq:
             file = stdin
         with open(file) as f:
             lines = f.readlines()
-            output = [k for k, g in itertools.groupby(lines)] if not ignore \
-                else [n for i, n in enumerate(lines) if i == 0 or n.casefold() != lines[i - 1].casefold()]
+            output = (
+                [k for k, g in itertools.groupby(lines)]
+                if not ignore
+                else [
+                    n
+                    for i, n in enumerate(lines)
+                    if i == 0 or n.casefold() != lines[i - 1].casefold()
+                ]
+            )
             for i in output:
                 stdout.append(i)
         # else:
@@ -289,10 +296,10 @@ class Sort:
                 if reverse:
                     lines.reverse()
                     for i in lines:
-                        stdout.append(i + '\n')
+                        stdout.append(i + "\n")
                 else:
                     for i in lines:
-                        stdout.append(i + '\n')
+                        stdout.append(i + "\n")
 
         else:
 
@@ -302,10 +309,10 @@ class Sort:
             if reverse:
                 input.reverse()
                 for i in input:
-                    stdout.append(i + '\n')
+                    stdout.append(i + "\n")
             else:
                 for i in input:
-                    stdout.append(i + '\n')
+                    stdout.append(i + "\n")
         return stdout
 
 
@@ -368,9 +375,9 @@ class LocalApp:
         if os.path.dirname(app):
             # path exists,is accessible, and not a directory
             if (
-                    os.path.exists(app)
-                    and os.access(app, existsAndExecutable)
-                    and not os.path.isdir(app)
+                os.path.exists(app)
+                and os.access(app, existsAndExecutable)
+                and not os.path.isdir(app)
             ):
                 return app
             return None
@@ -410,16 +417,15 @@ class LocalApp:
             for executable in possibleExecutable:
                 executablePath = os.path.join(os.path.normcase(p), executable)
                 if (
-                        os.path.exists(executablePath)
-                        and os.access(executablePath, existsAndExecutable)
-                        and not os.path.isdir(executablePath)
+                    os.path.exists(executablePath)
+                    and os.access(executablePath, existsAndExecutable)
+                    and not os.path.isdir(executablePath)
                 ):
                     return executablePath
 
     def exec(self, args, stdin=None):
-        app = self.app
         stdout = deque()
-        sysApp = self._getApp(app)
+        sysApp = self._getApp()
         if sysApp is not None:
             process = Popen(
                 f"{sysApp} {' '.join(args)}",

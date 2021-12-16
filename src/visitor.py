@@ -74,6 +74,11 @@ class ASTVisitor(Visitor):
         res_deque.append(res)
         return res_deque
 
+    def visitSingleQuote(self, singleQuote):
+        res = deque()
+        res.append(singleQuote.quotedPart)
+        return res
+
     def visitSub(self, sub):
         ast = command.parse(sub.quoted)
         out = ast.accept(self)
@@ -133,12 +138,14 @@ class ASTVisitor(Visitor):
         for n, arg in enumerate(args):
             if isinstance(arg, DoubleQuote):
                 args[n] = arg.accept(self).pop()
+            elif isinstance(arg, Substitution):
+                arg[n] = arg.accept(self).pop()
+                # print(arg, arg[n])
+            elif isinstance(arg, SingleQuote):
+                arg[n] = arg.accept(self).pop()
             elif isinstance(arg, str) and "*" in arg:
                 glob_index.append(n)
                 globbed_result.append(glob(arg))
-            elif isinstance(arg, Substitution):
-                arg[n] = arg.accept(self).pop()
-                print(arg, arg[n])
 
         app = factory.getApp(appName)
 

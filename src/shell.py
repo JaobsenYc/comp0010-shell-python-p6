@@ -10,7 +10,7 @@ from visitor import ASTVisitor
 
 if __name__ == "__main__":
     visitor = ASTVisitor()
-    out = ""
+    out = deque()
     args_num = len(sys.argv) - 1
     if args_num > 0:
         if args_num != 2:
@@ -18,6 +18,7 @@ if __name__ == "__main__":
         if sys.argv[1] != "-c":
             raise ValueError(f"unexpected command line argument {sys.argv[1]}")
         seq = command.parse(sys.argv[2])
+        # print(seq)
         out = seq.accept(visitor)
 
         while len(out) > 0:
@@ -28,6 +29,7 @@ if __name__ == "__main__":
         while True:
             print(os.getcwd() + "> ", end="")
             cmdline = input()
+            # print(cmdline)
             seq = command.parse(cmdline)
             out = seq.accept(visitor)
 
