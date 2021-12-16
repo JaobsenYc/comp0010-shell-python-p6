@@ -61,7 +61,7 @@ def unquoted():
     return s
 
 
-argument = quoted | unquoted  # .at_least(1)
+argument = (quoted | unquoted).many()  # .at_least(1)
 # redirection = seq(lessThan | greaterThan, whitespace >> argument)
 @generate
 def redirection():
@@ -82,7 +82,7 @@ atom = redirection | argument
 @generate
 def call():
     redirections = yield whitespace >> (redirection << whitespace).many()
-    callName = yield backQuoted | unquoted
+    callName = yield backQuoted | unquoted | doubleQuoted
     mixed_args = yield (whitespace >> atom).many() << whitespace
     args = []
     for a in mixed_args:
