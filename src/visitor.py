@@ -203,6 +203,7 @@ class ASTVisitor(Visitor):
 
         if redirectOut:
             redirectOut.accept(self, stdin=out)
+            return deque()
         else:
             return out
 
