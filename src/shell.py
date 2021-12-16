@@ -18,7 +18,7 @@ if __name__ == "__main__":
         if sys.argv[1] != "-c":
             raise ValueError(f"unexpected command line argument {sys.argv[1]}")
         seq = command.parse(sys.argv[2])
-        # print(seq)
+        print(seq)
         out = seq.accept(visitor)
 
         while len(out) > 0:

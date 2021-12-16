@@ -114,6 +114,10 @@ class ASTVisitor(Visitor):
         appName = call.appName
         args = call.args
 
+        # "`echo echo` foo"
+        if isinstance(appName, Substitution):
+            appName = appName.accept(self)
+
         stdin, redirectOut = None, None
         out = deque()
         glob_index = []
@@ -168,6 +172,8 @@ class ASTVisitor(Visitor):
                 out.extend(app.exec(argsForThisPair, stdin=stdin))
         else:
             out.extend(app.exec(args, stdin=stdin))
+
+        print("call: {}, out: {}", call, out)
 
         if redirectOut:
             redirectOut.accept(self, stdin=out)
