@@ -143,10 +143,10 @@ class ASTVisitor(Visitor):
             if isinstance(arg, DoubleQuote):
                 args[n] = arg.accept(self).pop()
             elif isinstance(arg, Substitution):
-                arg[n] = arg.accept(self).pop()
+                args[n] = arg.accept(self).pop()
                 # print(arg, arg[n])
             elif isinstance(arg, SingleQuote):
-                arg[n] = arg.accept(self).pop()
+                args[n] = arg.accept(self).pop()
             elif isinstance(arg, str) and "*" in arg:
                 glob_index.append(n)
                 globbed_result.append(glob(arg))

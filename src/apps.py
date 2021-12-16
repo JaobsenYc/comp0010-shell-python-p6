@@ -38,6 +38,8 @@ class Echo(Application):
     def exec(self, args, stdin=None):
         stdout = deque()
         # print(args)
+        # print(" ".join(args) + "\n"=="".join(args) + "\n")
+        # stdout.append(" ".join(args) + "\n")
         stdout.append(" ".join(args) + "\n")
         return stdout
 
@@ -75,81 +77,77 @@ class Cat:
 class Head:
     def exec(self, args, stdin=None):
         stdout = deque()
-        if stdin:
-            if len(args) != 0 and len(args) != 2:
-                raise ValueError("wrong number of command line arguments")
-            if len(args) == 0:
-                num_lines = 10
-            if len(args) == 2:
-                if args[0] != "-n":
-                    raise ValueError("wrong flags")
-                else:
-                    num_lines = int(args[1])
-            stdout = self.head(stdin)
-
-        else:
-            if len(args) != 1 and len(args) != 3:
-                raise ValueError("wrong number of command line arguments")
-            if len(args) == 1:
-                num_lines = 10
-                file = args[0]
-            if len(args) == 3:
-                if args[0] != "-n":
-                    raise ValueError("wrong flags")
-                else:
-                    num_lines = int(args[1])
-                    file = args[2]
+        num_lines = 10
+        if len(args) == 1:
+            num_lines = 10
+            file = args[0]
             with open(file) as f:
                 lines = f.readlines()
-                for i in range(0, min(len(lines), num_lines)):
-                    stdout.append(lines[i])
+        elif len(args) == 2:
+            if args[0] != "-n":
+                raise ValueError("wrong flags")
+            else:
+                num_lines = int(args[1])
+                lines = list(stdin)
+        elif len(args) == 3:
+            if args[0] != "-n":
+                raise ValueError("wrong flags")
+            else:
+                num_lines = int(args[1])
+                file = args[2]
+            with open(file) as f:
+                lines = f.readlines()
+        else:
+            lines = list(stdin)
+
+        stdout = self.helper(lines, num_lines)
+
         return stdout
 
-    def head(self, file):
-        stdout = deque()
-        with open(file) as f:
-            lines = f.readlines()
-            for i in range(0, min(len(lines), num_lines)):
-                stdout.append(lines[i])
+    def helper(self, lines, num_lines):
+        output = deque()
+        display_length = min(len(lines), int(num_lines))
+        for i in range(0, display_length):
+            output.append(lines[i])
+        return output
 
 
 class Tail:
     def exec(self, args, stdin=None):
         stdout = deque()
-        # print(stdin)
-        if stdin:
-            if len(args) != 0 and len(args) != 2:
-                raise ValueError("wrong number of command line arguments")
-            if len(args) == 0:
-                num_lines = 10
-            if len(args) == 2:
-                if args[0] != "-n":
-                    raise ValueError("wrong flags")
-                else:
-                    num_lines = int(args[1])
-            with open(stdin) as f:
-                lines = f.readlines()
-                display_length = min(len(lines), num_lines)
-                for i in range(0, min(len(lines), num_lines)):
-                    stdout.append(lines[len(lines) - display_length + i])
-        else:
-            if len(args) != 1 and len(args) != 3:
-                raise ValueError("wrong number of command line arguments")
-            if len(args) == 1:
-                num_lines = 10
-                file = args[0]
-            if len(args) == 3:
-                if args[0] != "-n":
-                    raise ValueError("wrong flags")
-                else:
-                    num_lines = int(args[1])
-                    file = args[2]
+        num_lines = 10
+        if len(args) == 1:
+            num_lines = 10
+            file = args[0]
             with open(file) as f:
                 lines = f.readlines()
-                display_length = min(len(lines), num_lines)
-                for i in range(0, display_length):
-                    stdout.append(lines[len(lines) - display_length + i])
+        elif len(args) == 2:
+            if args[0] != "-n":
+                raise ValueError("wrong flags")
+            else:
+                num_lines = int(args[1])
+                lines = list(stdin)
+        elif len(args) == 3:
+            if args[0] != "-n":
+                raise ValueError("wrong flags")
+            else:
+                num_lines = int(args[1])
+                file = args[2]
+            with open(file) as f:
+                lines = f.readlines()
+        else:
+            lines = list(stdin)
+
+        stdout = self.helper(lines, num_lines)
+
         return stdout
+
+    def helper(self, lines, num_lines):
+        output = deque()
+        display_length = min(len(lines), num_lines)
+        for i in range(0, min(len(lines), num_lines)):
+            output.append(lines[len(lines) - display_length + i])
+        return output
 
 
 class Grep:
@@ -158,24 +156,26 @@ class Grep:
         stdout = deque()
         if len(args) < 1:
             raise ValueError("wrong number of command line arguments")
-        pattern = args[0]
-        # print(pattern)
-        if not stdin:
+        elif len(args) > 1:
+            pattern = args[0]
             files = args[1:]
             for file in files:
                 with open(file) as f:
                     lines = f.readlines()
-
                     for line in lines:
                         if re.match(pattern, line):
-
                             if len(files) > 1:
                                 stdout.append(f"{file}:{line}")
                             else:
-                                # print(line)
                                 stdout.append(line)
-
-        return stdout
+            return stdout
+        else:
+            pattern = args[0]
+            input = list(stdin)
+            for line in input:
+                if re.match(pattern, line):
+                    stdout.append(line)
+            return stdout
 
 
 class Cut:
@@ -235,7 +235,7 @@ class Uniq:
     def exec(self, args, stdin=None):
         stdout = deque()
         ignore = False
-        # if not stdin:
+
         if len(args) > 2:
             raise ValueError("wrong number of command line arguments")
         elif len(args) == 2:
@@ -244,36 +244,50 @@ class Uniq:
             else:
                 ignore = True
             file = args[1]
+            stdout = self.file_helper(file, ignore)
+            return stdout
         elif len(args) == 1:
-            file = args[0]
-            if args[0] == "-i":
-                file = stdin
+            if args[0] != "-i":
+                file = args[0]
+                stdout = self.file_helper(file, ignore)
+                return stdout
+            else:
                 ignore = True
-        else:
-            file = stdin
+
+        input = list(stdin)
+        lines = []
+
+        # for i in input:
+        #     line=i.splitlines(True)
+        #     for j in line:
+        #         lines.append(j)
+
+        [lines.extend(i.splitlines(True)) for i in input]
+
+
+        stdout = self.helper(ignore, lines)
+        return stdout
+
+    def file_helper(self, file, ignore):
         with open(file) as f:
             lines = f.readlines()
-            output = (
-                [k for k, g in itertools.groupby(lines)]
-                if not ignore
-                else [
-                    n
-                    for i, n in enumerate(lines)
-                    if i == 0 or n.casefold() != lines[i - 1].casefold()
-                ]
-            )
-            for i in output:
-                stdout.append(i)
-        # else:
-        #     if args[0] != "-i":
-        #         raise ValueError("wrong flags")
-        #     lines = stdin.splitlines()
-        #
-        #     output = [k for k, g in itertools.groupby(lines)] if not ignore \
-        #         else [n for i, n in enumerate(lines) if i == 0 or n.casefold() != lines[i - 1].casefold()]
-        #     for i in output:
-        #         stdout.append(i)
-        return stdout
+            output = self.helper(ignore, lines)
+        return output
+
+    def helper(self, ignore, lines):
+        result = deque()
+        output = (
+            [k for k, g in itertools.groupby(lines)]
+            if not ignore
+            else [
+                n
+                for i, n in enumerate(lines)
+                if i == 0 or n.casefold() != lines[i - 1].casefold()
+            ]
+        )
+        for i in output:
+            result.append(i)
+        return result
 
 
 class Sort:
@@ -288,32 +302,36 @@ class Sort:
             else:
                 reverse = True
             file = args[1]
-        elif len(args) == 1:
-            file = args[0]
             with open(file) as f:
                 lines = f.read().splitlines()
-                lines.sort()
-                if reverse:
-                    lines.reverse()
-                    for i in lines:
-                        stdout.append(i + "\n")
-                else:
-                    for i in lines:
-                        stdout.append(i + "\n")
-
-        else:
-
-            input = list(stdin)
-            input = [s.strip() for s in input]
-            input.sort()
-            if reverse:
-                input.reverse()
-                for i in input:
-                    stdout.append(i + "\n")
+                stdout = self.helper(lines, reverse)
+                return stdout
+        elif len(args) == 1:
+            if args[0] != "-r":
+                file = args[0]
+                with open(file) as f:
+                    lines = f.read().splitlines()
+                    stdout = self.helper(lines, reverse)
+                return stdout
             else:
-                for i in input:
-                    stdout.append(i + "\n")
+                reverse = True
+        lines=[]
+        input = list(stdin)
+        [lines.extend(i.splitlines()) for i in input]
+        stdout = self.helper(lines, reverse)
         return stdout
+
+    def helper(self, lines, reverse):
+        output = deque()
+        lines.sort()
+        if reverse:
+            lines.reverse()
+            for i in lines:
+                output.append(i + "\n")
+        else:
+            for i in lines:
+                output.append(i + "\n")
+        return output
 
 
 class Find:
@@ -375,9 +393,9 @@ class LocalApp:
         if os.path.dirname(app):
             # path exists,is accessible, and not a directory
             if (
-                os.path.exists(app)
-                and os.access(app, existsAndExecutable)
-                and not os.path.isdir(app)
+                    os.path.exists(app)
+                    and os.access(app, existsAndExecutable)
+                    and not os.path.isdir(app)
             ):
                 return app
             return None
@@ -417,9 +435,9 @@ class LocalApp:
             for executable in possibleExecutable:
                 executablePath = os.path.join(os.path.normcase(p), executable)
                 if (
-                    os.path.exists(executablePath)
-                    and os.access(executablePath, existsAndExecutable)
-                    and not os.path.isdir(executablePath)
+                        os.path.exists(executablePath)
+                        and os.access(executablePath, existsAndExecutable)
+                        and not os.path.isdir(executablePath)
                 ):
                     return executablePath
 
@@ -452,9 +470,9 @@ if __name__ == "__main__":
     # print("Grep", Grep().exec(args=['A..', "dir1/file1.txt"]))
     # print("Head", Head().exec(args=["-n", 3, "file.txt"]))
     # print("Tail", Tail().exec(args=["-n", 3, "test.txt"]))
-    # print("Echo", Echo().exec(args=["test"]))
-    print("Find local", Find().exec(args=["-name", "parsercombinator.*"]))
-    print("Find local", Find().exec(args=["dir1", "-name", "*.txt"]))
+    print("Echo", Echo().exec(args=["echo hello world"]))
+    # print("Find local", Find().exec(args=["-name", "parsercombinator.*"]))
+    # print("Find local", Find().exec(args=["dir1", "-name", "*.txt"]))
     # print("Find local", Find().exec(args=["dir1", "-name", "*.txt"]))
     # print("Cut file", Cut().exec(args=["-b", '-2'], stdin="abc"))
     # print("Cut file", Cut().exec(args=["-b", '-2', "dir/file1.txt"]))
