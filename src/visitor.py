@@ -116,7 +116,7 @@ class ASTVisitor(Visitor):
 
         # "`echo echo` foo"
         if isinstance(appName, Substitution):
-            appName = appName.accept(self)
+            appName = "".join(appName.accept(self)).strip(" \n")
 
         stdin, redirectOut = None, None
         out = deque()
@@ -158,6 +158,8 @@ class ASTVisitor(Visitor):
                     argOut.append(subArg.accept(self).pop())
                 elif isinstance(subArg, str) and "*" in subArg:
                     glob_index.append(n)
+                    argOut.append(subArg)
+                else:
                     argOut.append(subArg)
 
             parsedArg.append("".join(argOut))
