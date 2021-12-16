@@ -17,23 +17,24 @@ if __name__ == "__main__":
             raise ValueError("wrong number of command line arguments")
         if sys.argv[1] != "-c":
             raise ValueError(f"unexpected command line argument {sys.argv[1]}")
-        seq = command.parse(sys.argv[2])
-        print(seq)
-        out = seq.accept(visitor)
+        cmd = command.parse(sys.argv[2])
+        # print(seq)
+        out = cmd.accept(visitor)
 
-        while len(out) > 0:
-            line = out.popleft()
-            print(line, end="")
-
+        # while len(out) > 0:
+        #     line = out.popleft()
+        #     print(line, end="")
+        print("".join(out), end="")
     else:
         while True:
             print(os.getcwd() + "> ", end="")
             cmdline = input()
             # print(cmdline)
-            seq = command.parse(cmdline)
-            out = seq.accept(visitor)
+            cmd = command.parse(cmdline)
+            out = cmd.accept(visitor)
 
-            while len(out) > 0:
-                line = out.popleft()
+            # while len(out) > 0:
+            #     line = out.popleft()
 
-                print(line, end="")
+            #     print(line, end="")
+            print("".join(out), end="")
