@@ -122,6 +122,7 @@ class ASTVisitor(Visitor):
         out = deque()
         glob_index = []
         globbed_result = []
+        parsedArg = []
 
         factory = AppsFactory()
 
@@ -139,17 +140,28 @@ class ASTVisitor(Visitor):
 
         # check if args includes double quote that needs to further eval
         # check glob in args
+        # decode args
         for n, arg in enumerate(args):
-            if isinstance(arg, DoubleQuote):
-                args[n] = arg.accept(self).pop()
-            elif isinstance(arg, Substitution):
-                args[n] = arg.accept(self).pop()
-                # print(arg, arg[n])
-            elif isinstance(arg, SingleQuote):
-                args[n] = arg.accept(self).pop()
-            elif isinstance(arg, str) and "*" in arg:
-                glob_index.append(n)
-                globbed_result.append(glob(arg))
+            argOut = deque()
+            hasGlobing = False
+            for subArg in arg:
+                # ['a','*.py'] c.py d.py a
+                # ['*.py']
+                # ac.py ad.py
+                # appName 'a'*.py
+
+                if (
+                    isinstance(subArg, DoubleQuote)
+                    or isinstance(subArg, Substitution)
+                    or isinstance(subArg, SingleQuote)
+                ):
+                    argOut.append(subArg.accept(self).pop())
+                elif isinstance(subArg, str) and "*" in subArg:
+                    glob_index.append(n)
+                    argOut.append(subArg)
+
+            parsedArg.append("".join(argOut))
+            globbed_result.append(glob(parsedArg[-1]))
 
         app = factory.getApp(appName)
 
@@ -160,18 +172,18 @@ class ASTVisitor(Visitor):
             count = 0
             for pair in glob_pairs:
                 argsForThisPair = []
-                for arg_index in range(len(args)):
+                for arg_index in range(len(parsedArg)):
                     if arg_index in glob_index:
                         argsForThisPair.append(pair[count])
                     else:
-                        argsForThisPair.append(args[arg_index])
+                        argsForThisPair.append(parsedArg[arg_index])
 
-                if len(args) == 1:
+                if len(parsedArg) == 1:
                     argsForThisPair = argsForThisPair[0]
 
                 out.extend(app.exec(argsForThisPair, stdin=stdin))
         else:
-            out.extend(app.exec(args, stdin=stdin))
+            out.extend(app.exec(parsedArg, stdin=stdin))
 
         print("call: {}, out: {}", call, out)
 
@@ -204,7 +216,7 @@ if __name__ == "__main__":
     visitor = ASTVisitor()
     call = Call(
         redirects=[],
-        appName="echo",
+        appName=SingleQuote,
         args=[DoubleQuote(["a", " ", Substitution('echo "b"')], True)],
     )
     call.accept(visitor)
