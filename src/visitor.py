@@ -93,7 +93,7 @@ class ASTVisitor(Visitor):
         # lines = []
         # [lines.extend(i.splitlines(True)) for i in input]
 
-        out = deque(map(lambda x: x.strip("\n "), out))
+        out = deque("".join(out).strip("\n ").replace("\n", " "))
 
         return out
 
@@ -167,7 +167,7 @@ class ASTVisitor(Visitor):
                     or isinstance(subArg, Substitution)
                     or isinstance(subArg, SingleQuote)
                 ):
-                    argOut.append(subArg.accept(self).pop())
+                    argOut.append("".join(subArg.accept(self)))
                 elif isinstance(subArg, str) and "*" in subArg:
                     glob_index.append(n)
                     argOut.append(subArg)
