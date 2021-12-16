@@ -44,9 +44,11 @@ class Echo(Application):
 
 class Ls:
     def exec(self, args, stdin=None):
+        print(True)
         stdout = deque()
         if len(args) == 0:
             ls_dir = os.getcwd()
+            print(ls_dir)
         elif len(args) > 1:
             raise ValueError("wrong number of command line arguments")
         else:
@@ -60,10 +62,9 @@ class Ls:
 class Cat:
     def exec(self, args, stdin=None):
         stdout = deque()
-
         if stdin:
-            with open(stdin) as f:
-                stdout.append(f.read())
+            stdout = stdin
+
         else:
             for a in args:
                 with open(a) as f:
