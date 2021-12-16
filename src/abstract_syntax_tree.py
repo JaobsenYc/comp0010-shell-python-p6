@@ -7,7 +7,7 @@ class AST(ABC):
         raise Exception("NotImplementedException")
 
 
-class SingleQuote(AST):
+class SingleQuote:
     def __init__(self, quotedPart):
         self.quotedPart = quotedPart
 

@@ -33,7 +33,7 @@ class Visitor(ABC):
         pass
 
     @abstractmethod
-    def visitCall(self, call, input=None, needPipeReturn=False):
+    def visitCall(self, call, input=None):
         pass
 
     @abstractmethod
@@ -69,11 +69,14 @@ class ASTVisitor(Visitor):
                     while len(out) > 0:
                         line = out.popleft()
                         res += line
-        return res
+
+        res_deque = deque()
+        res_deque.append(res)
+        return res_deque
 
     def visitSub(self, sub):
         ast = command.parse(sub.quoted)
-        out = ast.accept(self, needPipeReturn=True)
+        out = ast.accept(self)
 
         return out
 
@@ -130,9 +133,12 @@ class ASTVisitor(Visitor):
         for n, arg in enumerate(args):
             if isinstance(arg, DoubleQuote):
                 args[n] = arg.accept(self).pop()
-            elif not isinstance(arg, SingleQuote) and "*" in arg:
+            elif isinstance(arg, str) and "*" in arg:
                 glob_index.append(n)
                 globbed_result.append(glob(arg))
+            elif isinstance(arg, Substitution):
+                arg[n] = arg.accept(self).pop()
+                print(arg, arg[n])
 
         app = factory.getApp(appName)
 

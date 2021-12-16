@@ -115,7 +115,7 @@ def command():
 
 if __name__ == "__main__":
     # print(command.parse("< *.py call a b \"a\" > out| hello `echo arg` *.py *s.py ; cat a "))
-    print(command.parse('echo "b"'))
+    print(command.parse("echo 'echo foo boo'"))
 
 # space = regex("\s+")
 # optional_space = space.optional()
