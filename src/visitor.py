@@ -89,6 +89,12 @@ class ASTVisitor(Visitor):
     def visitSub(self, sub):
         ast = command.parse(sub.quoted)
         out = ast.accept(self)
+        # input = list(stdin)
+        # lines = []
+        # [lines.extend(i.splitlines(True)) for i in input]
+
+        for element in out:
+            element = element.strip(" \n")
 
         return out
 
