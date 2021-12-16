@@ -10,7 +10,7 @@ from visitor import ASTVisitor
 
 if __name__ == "__main__":
     visitor = ASTVisitor()
-    out=""
+    out = ""
     args_num = len(sys.argv) - 1
     if args_num > 0:
         if args_num != 2:
@@ -19,10 +19,8 @@ if __name__ == "__main__":
             raise ValueError(f"unexpected command line argument {sys.argv[1]}")
         seq = command.parse(sys.argv[2])
         out = seq.accept(visitor)
-        print("out: ", len(out))
 
         while len(out) > 0:
-            print(True)
             line = out.popleft()
             print(line, end="")
 
@@ -34,7 +32,6 @@ if __name__ == "__main__":
             out = seq.accept(visitor)
 
             while len(out) > 0:
-                print(True)
                 line = out.popleft()
-                print("len: ", len(out))
+
                 print(line, end="")
