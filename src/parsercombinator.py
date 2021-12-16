@@ -61,7 +61,7 @@ def unquoted():
     return s
 
 
-argument = (quoted | unquoted).many()  # .at_least(1)
+argument = (quoted | unquoted).at_least(1)  # .at_least(1)
 # redirection = seq(lessThan | greaterThan, whitespace >> argument)
 @generate
 def redirection():
@@ -115,7 +115,7 @@ def command():
 
 if __name__ == "__main__":
     # print(command.parse("< *.py call a b \"a\" > out| hello `echo arg` *.py *s.py ; cat a "))
-    print(command.parse("echo 'echo foo boo'"))
+    print(command.parse("`echo echo` hi"))
 
 # space = regex("\s+")
 # optional_space = space.optional()
