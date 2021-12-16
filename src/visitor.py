@@ -17,6 +17,10 @@ from itertools import product
 
 class Visitor(ABC):
     @abstractmethod
+    def visitSingleQuote(self, singleQuote):
+        pass
+
+    @abstractmethod
     def visitDoubleQuote(self, doubleQuote):
         pass
 
@@ -47,8 +51,11 @@ class Visitor(ABC):
 
 # @singleton # or use an instance?
 class ASTVisitor(Visitor):
-    # def visitSingleQuote(self, singleQuote):
-    #     quotedPart = singleQuote.quotedPart
+    def visitSingleQuote(self, singleQuote):
+        quotedPart = singleQuote.quotedPart
+        res_deque = deque()
+        res_deque.append(quotedPart)
+        return res_deque
 
     def visitDoubleQuote(self, doubleQuote):
         containSubstitution, quotedPart = (
@@ -187,7 +194,7 @@ class ASTVisitor(Visitor):
         else:
             out.extend(app.exec(parsedArg, stdin=stdin))
 
-        print("call: {}, out: {}", call, out)
+        # print("call: {}, out: {}", call, out)
 
         if redirectOut:
             redirectOut.accept(self, stdin=out)
