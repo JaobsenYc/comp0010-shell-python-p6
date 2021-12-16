@@ -93,8 +93,7 @@ class ASTVisitor(Visitor):
         # lines = []
         # [lines.extend(i.splitlines(True)) for i in input]
 
-        for element in out:
-            element = element.strip(" \n")
+        out = deque(map(lambda x: x.strip("\n "), out))
 
         return out
 
