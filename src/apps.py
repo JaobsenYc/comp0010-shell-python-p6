@@ -44,11 +44,10 @@ class Echo(Application):
 
 class Ls:
     def exec(self, args, stdin=None):
-        print(True)
+
         stdout = deque()
         if len(args) == 0:
             ls_dir = os.getcwd()
-            print(ls_dir)
         elif len(args) > 1:
             raise ValueError("wrong number of command line arguments")
         else:
@@ -76,7 +75,6 @@ class Cat:
 class Head:
     def exec(self, args, stdin=None):
         stdout = deque()
-        # print(stdin)
         if stdin:
             if len(args) != 0 and len(args) != 2:
                 raise ValueError("wrong number of command line arguments")
@@ -195,9 +193,7 @@ class Cut:
             if args[0] != "-b":
                 raise ValueError("wrong flags")
             pattern = args[1]
-            # input="".join(stdin)
             input = stdin.pop()
-            print("输入", input)
             lines = [input.strip()]
 
         pattern_list = pattern.split(",")
@@ -287,17 +283,28 @@ class Sort:
             file = args[1]
         elif len(args) == 1:
             file = args[0]
+            with open(file) as f:
+                lines = f.read().splitlines()
+                lines.sort()
+                if reverse:
+                    lines.reverse()
+                    for i in lines:
+                        stdout.append(i + '\n')
+                else:
+                    for i in lines:
+                        stdout.append(i + '\n')
+
         else:
-            file = stdin.popleft()
-        with open(file) as f:
-            lines = f.read().splitlines()
-            lines.sort()
+
+            input = list(stdin)
+            input = [s.strip() for s in input]
+            input.sort()
             if reverse:
-                lines.reverse()
-                for i in lines:
+                input.reverse()
+                for i in input:
                     stdout.append(i + '\n')
             else:
-                for i in lines:
+                for i in input:
                     stdout.append(i + '\n')
         return stdout
 
@@ -433,15 +440,15 @@ class LocalApp:
 
 if __name__ == "__main__":
     # print("Pwd", Pwd().exec())
-    print("Ls", Ls().exec(args=[]))
+    # print("Ls", Ls().exec(args=[]))
     # print("Ls", Ls().exec(args=["F:\\OneDrive\\OneDrive - University College London\\"]))
     # print("Cat", Cat().exec(args=["dir1/file1.txt"]))
     # print("Grep", Grep().exec(args=['A..', "dir1/file1.txt"]))
-    print("Head", Head().exec(args=["-n", 3, "file.txt"]))
+    # print("Head", Head().exec(args=["-n", 3, "file.txt"]))
     # print("Tail", Tail().exec(args=["-n", 3, "test.txt"]))
     # print("Echo", Echo().exec(args=["test"]))
-    # print("Find local", Find().exec(args=["-name", "parsercombinator.*"]))
-    # print("Find local", Find().exec(args=["dir1", "-name", "*.txt"]))
+    print("Find local", Find().exec(args=["-name", "parsercombinator.*"]))
+    print("Find local", Find().exec(args=["dir1", "-name", "*.txt"]))
     # print("Find local", Find().exec(args=["dir1", "-name", "*.txt"]))
     # print("Cut file", Cut().exec(args=["-b", '-2'], stdin="abc"))
     # print("Cut file", Cut().exec(args=["-b", '-2', "dir/file1.txt"]))
