@@ -63,7 +63,7 @@ class RedirectOut(AST):
         self.arg = arg
 
     def accept(self, visitor, stdin=None):
-        return visitor.visitRedirectOut(self)
+        return visitor.visitRedirectOut(self, stdin)
 
     def __str__(self) -> str:
         return f"RediectOut({str(self.arg)})"
