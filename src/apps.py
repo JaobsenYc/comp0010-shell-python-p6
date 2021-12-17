@@ -80,11 +80,21 @@ class Cat:
 
         else:
             for a in args:
-                with open(a) as f:
-                    stdout.append(f.read())
+                try:
+                    lines = self.file_helper(a)
+                    stdout.append(lines)
+                except FileNotFoundError:
+                    std_dict['stderr'] = f"Cat: {a}: No such file or directory"
+                    std_dict['exit_code'] = "1"
+                    return std_dict
 
         std_dict["stdout"] = stdout
         return std_dict
+
+    def file_helper(self, file):
+        with open(file) as f:
+            lines = f.read()
+        return lines
 
 
 class Head:
@@ -95,8 +105,12 @@ class Head:
         if len(args) == 1:
             num_lines = 10
             file = args[0]
-            with open(file) as f:
-                lines = f.readlines()
+            try:
+                lines = self.file_helper(file)
+            except FileNotFoundError:
+                std_dict['stderr'] = f"Head: {file}: No such file or directory"
+                std_dict['exit_code'] = "1"
+                return std_dict
         elif len(args) == 2:
             if args[0] != "-n":
                 std_dict["stderr"] = "wrong flags"
@@ -113,8 +127,12 @@ class Head:
             else:
                 num_lines = int(args[1])
                 file = args[2]
-            with open(file) as f:
-                lines = f.readlines()
+            try:
+                lines = self.file_helper(file)
+            except FileNotFoundError:
+                std_dict['stderr'] = f"Head: {file}: No such file or directory"
+                std_dict['exit_code'] = "1"
+                return std_dict
         else:
             lines = list(stdin)
 
@@ -122,6 +140,11 @@ class Head:
 
         std_dict["stdout"] = stdout
         return std_dict
+
+    def file_helper(self, file):
+        with open(file) as f:
+            lines = f.readlines()
+        return lines
 
     def helper(self, lines, num_lines):
         output = deque()
@@ -139,8 +162,12 @@ class Tail:
         if len(args) == 1:
             num_lines = 10
             file = args[0]
-            with open(file) as f:
-                lines = f.readlines()
+            try:
+                lines = self.file_helper(file)
+            except FileNotFoundError:
+                std_dict['stderr'] = f"Head: {file}: No such file or directory"
+                std_dict['exit_code'] = "1"
+                return std_dict
         elif len(args) == 2:
             if args[0] != "-n":
                 std_dict["stderr"] = "wrong flags"
@@ -157,8 +184,12 @@ class Tail:
             else:
                 num_lines = int(args[1])
                 file = args[2]
-            with open(file) as f:
-                lines = f.readlines()
+            try:
+                lines = self.file_helper(file)
+            except FileNotFoundError:
+                std_dict['stderr'] = "No such file or directory"
+                std_dict['exit_code'] = "1"
+                return std_dict
         else:
             lines = list(stdin)
 
@@ -166,6 +197,11 @@ class Tail:
 
         std_dict["stdout"] = stdout
         return std_dict
+
+    def file_helper(self, file):
+        with open(file) as f:
+            lines = f.readlines()
+        return lines
 
     def helper(self, lines, num_lines):
         output = deque()
@@ -188,15 +224,19 @@ class Grep:
             pattern = args[0]
             files = args[1:]
             for file in files:
-                with open(file) as f:
-                    lines = f.readlines()
+                try:
+                    lines = self.file_helper(file)
                     for line in lines:
                         if re.match(pattern, line):
                             if len(files) > 1:
                                 stdout.append(f"{file}:{line}")
                             else:
                                 stdout.append(line)
-            std_dict["stdout"] = stdout
+                except FileNotFoundError:
+                    std_dict['stderr'] = f"Grep: {file}: No such file or directory"
+                    std_dict['exit_code'] = "1"
+                    return std_dict
+            std_dict['stdout'] = stdout
             return std_dict
         else:
             pattern = args[0]
@@ -206,6 +246,11 @@ class Grep:
                     stdout.append(line)
             std_dict["stdout"] = stdout
             return std_dict
+
+    def file_helper(self, file):
+        with open(file) as f:
+            lines = f.readlines()
+        return lines
 
 
 class Cut:
@@ -235,10 +280,14 @@ class Cut:
 
         pattern_list = pattern.split(",")
         if not lines:
-            with open(file) as f:
+            try:
+                lines = self.file_helper(file)
+            except FileNotFoundError:
+                std_dict['stderr'] = "No such file or directory"
+                std_dict['exit_code'] = "1"
+                return std_dict
                 # If the cut command uses the -b option, then when executing this command,
                 # cut will sort all the positions after -b from small to large, and then extract them.
-                lines = f.read().splitlines()
 
         for line in lines:
             start_list = []
@@ -268,6 +317,11 @@ class Cut:
         std_dict["stdout"] = stdout
         return std_dict
 
+    def file_helper(self, file):
+        with open(file) as f:
+            lines = f.read().splitlines()
+        return lines
+
 
 class Uniq:
     def exec(self, args, stdin=None):
@@ -287,14 +341,22 @@ class Uniq:
             else:
                 ignore = True
             file = args[1]
-            stdout = self.file_helper(file, ignore)
-            std_dict["stdout"] = stdout
+            try:
+                stdout = self.file_helper(file, ignore)
+                std_dict['stdout'] = stdout
+            except FileNotFoundError:
+                std_dict['stderr'] = f"Grep: {file}: No such file or directory"
+                std_dict['exit_code'] = "1"
             return std_dict
         elif len(args) == 1:
             if args[0] != "-i":
                 file = args[0]
-                stdout = self.file_helper(file, ignore)
-                std_dict["stdout"] = stdout
+                try:
+                    stdout = self.file_helper(file, ignore)
+                    std_dict['stdout'] = stdout
+                except FileNotFoundError:
+                    std_dict['stderr'] = f"Grep: {file}: No such file or directory"
+                    std_dict['exit_code'] = "1"
                 return std_dict
             else:
                 ignore = True
@@ -302,13 +364,7 @@ class Uniq:
         input = list(stdin)
         lines = []
 
-        # for i in input:
-        #     line=i.splitlines(True)
-        #     for j in line:
-        #         lines.append(j)
-
         [lines.extend(i.splitlines(True)) for i in input]
-
         stdout = self.helper(ignore, lines)
         std_dict["stdout"] = stdout
         return std_dict
@@ -352,18 +408,24 @@ class Sort:
             else:
                 reverse = True
             file = args[1]
-            with open(file) as f:
-                lines = f.read().splitlines()
-                stdout = self.helper(lines, reverse)
-                std_dict["stdout"] = stdout
-                return std_dict
+
+            try:
+                stdout = self.file_helper(file, reverse)
+                std_dict['stdout'] = stdout
+            except FileNotFoundError:
+                std_dict['stderr'] = f"Grep: {file}: No such file or directory"
+                std_dict['exit_code'] = "1"
+            return std_dict
+
         elif len(args) == 1:
             if args[0] != "-r":
                 file = args[0]
-                with open(file) as f:
-                    lines = f.read().splitlines()
-                    stdout = self.helper(lines, reverse)
-                std_dict["stdout"] = stdout
+                try:
+                    stdout = self.file_helper(file, reverse)
+                    std_dict['stdout'] = stdout
+                except FileNotFoundError:
+                    std_dict['stderr'] = f"Grep: {file}: No such file or directory"
+                    std_dict['exit_code'] = "1"
                 return std_dict
             else:
                 reverse = True
@@ -373,6 +435,12 @@ class Sort:
         stdout = self.helper(lines, reverse)
         std_dict["stdout"] = stdout
         return std_dict
+
+    def file_helper(self, file, reverse):
+        with open(file) as f:
+            lines = f.read().splitlines()
+            output = self.helper(lines, reverse)
+        return output
 
     def helper(self, lines, reverse):
         output = deque()
@@ -525,42 +593,43 @@ class LocalApp:
         return std_dict
 
 
-# if __name__ == "__main__":
-# print("Pwd", Pwd().exec())
-# print("Ls", Ls().exec(args=[]))
-# print("Ls", Ls().exec(args=["F:\\OneDrive\\OneDrive - University College London\\"]))
-# print("Cat", Cat().exec(args=["dir1/file1.txt"]))
-# print("Grep", Grep().exec(args=['A..', "dir1/file1.txt"]))
-# print("Head", Head().exec(args=["-n", 3, "file.txt"]))
-# print("Tail", Tail().exec(args=["-n", 3, "test.txt"]))
-# print("Echo", Echo().exec(args=["echo hello world"]))
-# print("Find local", Find().exec(args=["-name", "parsercombinator.*"]))
-# print("Find local", Find().exec(args=["dir1", "-name", "*.txt"]))
-# print("Find local", Find().exec(args=["dir1", "-name", "*.txt"]))
-# print("Cut file", Cut().exec(args=["-b", '-2'], stdin="abc"))
-# print("Cut file", Cut().exec(args=["-b", '-2', "dir/file1.txt"]))
-# print("Uniq Care case", Uniq().exec(args=['test_abc.txt']))
-# print("Uniq Ignore case", Uniq().exec(args=["-i", 'test_abc.txt']))
-# print("Uniq Care case", Uniq().exec(args=['test_abc.txt']))
-# print("Uniq Ignore case", Uniq().exec(args=["-i"], stdin='test_abc.txt'))
-# print("Sort", Sort().exec(args=['dir1/file1.txt']))
-# args_num = len(sys.argv) - 1
-# if args_num > 0:
-#     if args_num != 2:
-#         raise ValueError("wrong number of command line arguments")
-#     if sys.argv[1] != "-c":
-#         raise ValueError(f"unexpected command line argument {sys.argv[1]}")
-#     out = deque()
-#     print(out)
-#     # eval(sys.argv[2], out)
-#     while len(out) > 0:
-#         print(out.popleft(), end="")
-# else:
-#     while True:
-#         print(os.getcwd() + "> ", end="")
-#         cmdline = input()
-#         out = deque()
-#         print(cmdline,out)
-#         # eval(cmdline, out)
-#         while len(out) > 0:
-#             print(out.popleft(), end="")
+if __name__ == "__main__":
+    # raise ValueError('A very specific bad thing happened.')
+    print("Pwd", Pwd().exec())
+    # print("Ls", Ls().exec(args=[]))
+    # print("Ls", Ls().exec(args=["F:\\OneDrive\\OneDrive - University College London\\"]))
+    # print("Cat", Cat().exec(args=["dir1/file1.txt"]))
+    print("Grep", Grep().exec(args=['A..', "file.txt"]))
+    print("Head", Head().exec(args=["-n", 3, "file.txt"]))
+    # print("Tail", Tail().exec(args=["-n", 3, "test.txt"]))
+    # print("Echo", Echo().exec(args=["echo hello world"]))
+    # print("Find local", Find().exec(args=["-name", "parsercombinator.*"]))
+    # print("Find local", Find().exec(args=["dir1", "-name", "*.txt"]))
+    # print("Find local", Find().exec(args=["dir1", "-name", "*.txt"]))
+    # print("Cut file", Cut().exec(args=["-b", '-2'], stdin="abc"))
+    print("Cut file", Cut().exec(args=["-b", '-2', "file.txt"]))
+    # print("Uniq Care case", Uniq().exec(args=['test_abc.txt']))
+    # print("Uniq Ignore case", Uniq().exec(args=["-i", 'test_abc.txt']))
+    # print("Uniq Care case", Uniq().exec(args=['test_abc.txt']))
+    # print("Uniq Ignore case", Uniq().exec(args=["-i"], stdin='test_abc.txt'))
+    print("Sort", Sort().exec(args=['file.txt']))
+    # args_num = len(sys.argv) - 1
+    # if args_num > 0:
+    #     if args_num != 2:
+    #         raise ValueError("wrong number of command line arguments")
+    #     if sys.argv[1] != "-c":
+    #         raise ValueError(f"unexpected command line argument {sys.argv[1]}")
+    #     out = deque()
+    #     print(out)
+    #     # eval(sys.argv[2], out)
+    #     while len(out) > 0:
+    #         print(out.popleft(), end="")
+    # else:
+    #     while True:
+    #         print(os.getcwd() + "> ", end="")
+    #         cmdline = input()
+    #         out = deque()
+    #         print(cmdline,out)
+    #         # eval(cmdline, out)
+    #         while len(out) > 0:
+    #             print(out.popleft(), end="")
