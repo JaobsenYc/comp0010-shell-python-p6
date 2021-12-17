@@ -64,6 +64,7 @@ class ASTVisitor(Visitor):
         )
 
         res = ""
+        err = None
 
         if not containSubstitution:
             res = "{}".format("".join(quotedPart))
@@ -72,30 +73,37 @@ class ASTVisitor(Visitor):
                 if not isinstance(part, Substitution):
                     res += part
                 else:
-                    out = part.accept(self)
-                    while len(out) > 0:
-                        line = out.popleft()
-                        res += line
+                    executed = part.accept(self)
+                    out = executed["stdout"]
+                    err = executed["stderr"]
+                    res = "".join(out)
 
         res_deque = deque()
         res_deque.append(res)
-        return {"stdout": res_deque, "stderr": deque(), "exit_code": 0}
+        return {
+            "stdout": res_deque,
+            "stderr": deque() if not err else err,
+            "exit_code": 0 if not err else 1,
+        }
 
-    def visitSingleQuote(self, singleQuote):
-        res = deque()
-        res.append(singleQuote.quotedPart)
-        return {"stdout": res, "stderr": deque(), "exit_code": 0}
+    # def visitSingleQuote(self, singleQuote):
+    #     res = deque()
+    #     res.append(singleQuote.quotedPart)
+    #     return {"stdout": res, "stderr": deque(), "exit_code": 0}
 
     def visitSub(self, sub):
         ast = command.parse(sub.quoted)
-        out = ast.accept(self)
-        if not out["exit_code"]:
-            out["stdout"] = deque(
-                "".join(out["stdout"]).strip("\n ").replace("\n", " ")
-            )
-            return {"stdout": out, "stderr": deque(), "exit_code": 0}
-        else:
-            return out
+        executed = ast.accept(self)
+        # if not out["exit_code"]:
+        out = executed["stdout"]
+        out_new = deque("".join(out["stdout"]).strip("\n ").replace("\n", " "))
+        return {
+            "stdout": out_new,
+            "stderr": executed["stderr"],
+            "exit_code": executed["exit_code"],
+        }
+        # else:
+        #     return out
 
     def visitRedirectIn(self, redirectIn):
         out = deque()
@@ -107,11 +115,7 @@ class ASTVisitor(Visitor):
                 with open(i) as f:
                     out.extend(f.readlines())
             except FileNotFoundError as fnfe:
-                return {
-                    "stdout": deque(),
-                    "stderr": deque().append("No such file or directory"),
-                    "exit_code": 1,
-                }
+                raise fnfe
 
         return {"stdout": out, "stderr": deque(), "exit_code": 0}
 
@@ -139,6 +143,7 @@ class ASTVisitor(Visitor):
 
         stdin, redirectOut = None, None
         out = deque()
+        err = deque()
         glob_index = []
         globbed_result = []
         parsedArg = []
@@ -147,11 +152,7 @@ class ASTVisitor(Visitor):
 
         for r in redirects:
             if isinstance(r, RedirectIn) and not stdin:  # check type
-                try:
-                    stdin = r.accept(self)
-                except FileNotFoundError as fnfe:
-                    details = fnfe.args[0]
-                    print(details["stderr"].pop())
+                stdin = r.accept(self)["stdout"]
             elif isinstance(r, RedirectOut) and not redirectOut:
                 redirectOut = r
             else:
@@ -181,7 +182,8 @@ class ASTVisitor(Visitor):
                 ):
                     executedProcess = subArg.accept(self)
                     if executedProcess["exit_code"]:
-                        print(executedProcess["stderr"].pop())
+                        # print(executedProcess["stderr"].pop())
+                        raise Exception(executedProcess["stderr"])
                     else:
                         argOut.append("".join(executedProcess["stdout"]))
                 elif isinstance(subArg, str) and "*" in subArg:
@@ -218,18 +220,21 @@ class ASTVisitor(Visitor):
 
                 # if len(glob_index) == 1:
                 #     argsForThisPair = argsForThisPair[0]
-
-                out.extend(app.newExec(argsForThisPair, stdin=stdin)["stdout"])
+                executed = app.exec(argsForThisPair, stdin=stdin)
+                out.extend(executed["stdout"])
+                err.extend(executed["stderr"])
         else:
-            out.extend(app.newExec(parsedArg, stdin=stdin)["stdout"])
+            executed = app.exec(parsedArg, stdin=stdin)
+            out.extend(executed["stdout"])
+            err.extend(executed["stderr"])
 
         # print("call: {}, out: {}", call, out)
 
         if redirectOut:
             redirectOut.accept(self, stdin=out)
-            return {"stdout": deque(), "stderr": deque(), "exit_code": 0}
+            return {"stdout": deque(), "stderr": err, "exit_code": len(err)}
         else:
-            return {"stdout": out, "stderr": deque(), "exit_code": 0}
+            return {"stdout": out, "stderr": err, "exit_code": len(err)}
 
     def visitSeq(self, seq):
         left = seq.left
@@ -238,17 +243,24 @@ class ASTVisitor(Visitor):
         outLeft = left.accept(self)
         outRight = right.accept(self)
 
-        outLeft.extend(outRight)
-        return {"stdout": outLeft, "stderr": deque(), "exit_code": 0}
+        return {
+            "stdout": outLeft["stdout"].extend(outRight["stdout"]),
+            "stderr": outLeft["stderr"].extend(outRight["stderr"]),
+            "exit_code": outLeft["exit_code"] or outRight["exit_code"],
+        }
 
     def visitPipe(self, pipe):  # what if | has redirectOut before?
         left = pipe.left
         right = pipe.right
 
         outLeft = left.accept(self)
-        outRight = right.accept(self, input=outLeft)
+        outRight = right.accept(self, input=outLeft["stdout"])
 
-        return {"stdout": outRight, "stderr": deque(), "exit_code": 0}
+        return {
+            "stdout": outRight["stdout"],
+            "stderr": outLeft["stderr"].extend(outRight["stderr"]),
+            "exit_code": outLeft["exit_code"] or outRight["exit_code"],
+        }
 
 
 if __name__ == "__main__":

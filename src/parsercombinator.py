@@ -2,7 +2,6 @@ from parsy import regex, string, generate, seq
 from glob import glob
 from apps import *
 import abstract_syntax_tree
-from operators import *
 
 # from visitor import ASTVisitor
 

@@ -21,22 +21,38 @@ if __name__ == "__main__":
             raise ValueError(f"unexpected command line argument {sys.argv[1]}")
         cmd = command.parse(sys.argv[2])
         # print(seq)
-        out = cmd.accept(visitor)
+        try:
+            out = cmd.accept(visitor)
+            if out["exit_code"]:
+                print("".join(out["stdout"]), end="")
+                print("".join(out["stderr"]), end="")
+            else:
+                print("".join(out["stdout"]), end="")
+        except Exception as e:
+            print(sys.stderr.write(f"{e}\n"))
 
         # while len(out) > 0:
         #     line = out.popleft()
         #     print(line, end="")
-        print("".join(out["stdout"]), end="")
+        # print("".join(out["stdout"]), end="")
     else:
         while True:
             print(os.getcwd() + "> ", end="")
             cmdline = input()
             # print(cmdline)
             cmd = command.parse(cmdline)
-            out = cmd.accept(visitor)
+            # out = cmd.accept(visitor)
 
             # while len(out) > 0:
             #     line = out.popleft()
 
             #     print(line, end="")
-            print("".join(out["stdout"]), end="")
+            try:
+                out = cmd.accept(visitor)
+                if out["exit_code"]:
+                    print("".join(out["stdout"]), end="")
+                    print("".join(out["stderr"]), end="")
+                else:
+                    print("".join(out["stdout"]), end="")
+            except Exception as e:
+                print(sys.stderr.write(f"{e}\n"))

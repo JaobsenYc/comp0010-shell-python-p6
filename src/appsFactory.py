@@ -19,10 +19,12 @@ def singleton(cls):
 
 @singleton
 class AppDecorator:
-    def decorateUnsafe(self, cls):
+    def decorateSafe(self, cls):
+        originalExec = cls.exec
+
         def newExec(args, stdin=None):
 
-            executedProcess = cls.exec(args, stdin=stdin)
+            executedProcess = originalExec(args, stdin=stdin)
             if executedProcess["exit_code"]:
                 raise Exception("".join(executedProcess["stderr"]))
             else:
@@ -31,21 +33,18 @@ class AppDecorator:
         cls.exec = newExec
         return cls
 
-    def decorateSafe(self, cls):
-        def newExec(args, stdin=None):
+    def decorateUnsafe(self, cls):
+        # def newExec(args, stdin=None):
 
-            try:
-                executedProcess = cls.exec(args, stdin=stdin)
-                if executedProcess["exit_code"]:
-                    raise Exception(
-                        {"command": args, "stderr": "".join(executedProcess["stderr"])}
-                    )
-                return executedProcess
-            except Exception as e:
-                details = e.args[0]
-                print("{}: {}".format(details["command"], details["stderr"]))
+        #     try:
+        #         executedProcess = cls.exec(args, stdin=stdin)
+        #         if executedProcess["exit_code"]:
+        #             raise Exception(args, "".join(executedProcess["stderr"]))
+        #         return executedProcess
+        #     except Exception as e:
+        #         print("{}: {}".format(e.args[0], e.args[1]))
 
-        cls.newExec = newExec
+        # cls.newExec = newExec
         return cls
 
 
