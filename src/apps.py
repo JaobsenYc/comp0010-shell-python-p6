@@ -3,7 +3,7 @@ import sys
 import os
 from os import listdir
 from collections import deque
-from abc import ABC, abstractmethod
+from abc import ABC
 import fnmatch
 import itertools
 import subprocess
@@ -64,7 +64,14 @@ class Ls:
             return std_dict
         else:
             ls_dir = args[0]
-        for f in listdir(ls_dir):
+
+        try:
+            lst_dir = listdir(ls_dir)
+        except Exception:
+            std_dict["stderr"] = f"Ls: {ls_dir}: No such directory"
+            std_dict["exit_code"] = "1"
+            return std_dict
+        for f in lst_dir:
             if not f.startswith("."):
                 stdout.append(f + "\n")
         std_dict["stdout"] = stdout

@@ -17,7 +17,8 @@ class SingleQuote(AST):
 
 class DoubleQuote(AST):
     def __init__(self, quotedPart, containSubstitution):
-        self.containSubstitution, self.quotedPart = containSubstitution, quotedPart
+        self.containSubstitution = containSubstitution
+        self.quotedPart = quotedPart
 
     def accept(self, visitor):
         return visitor.visitDoubleQuote(self)
@@ -86,7 +87,10 @@ class Call(AST):
         return visitor.visitCall(self, input=input)
 
     def __str__(self) -> str:
-        return f"Call({str(self.redirects)}, {str(self.appName)}, {str(self.args)})"
+        return f"Call(\
+                {str(self.redirects)}, \
+                {str(self.appName)}, \
+                {str(self.args)})"
 
 
 class Seq(AST):

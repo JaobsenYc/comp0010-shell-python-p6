@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from posixpath import supports_unicode_filenames
 from abstract_syntax_tree import (
     Call,
     DoubleQuote,
@@ -8,7 +7,7 @@ from abstract_syntax_tree import (
     SingleQuote,
     Substitution,
 )
-from parsercombinator import command, doubleQuoted
+from parsercombinator import command
 from glob import glob
 from appsFactory import AppsFactory
 from collections import deque
@@ -122,7 +121,7 @@ class ASTVisitor(Visitor):
         n = len(fs)
 
         if n > 1:
-            raise Exception("invalid redirection out")  # or other error handling?
+            raise Exception("invalid redirection out")
 
         stdout_f = fs[0]
         with open(stdout_f, "w") as f:
@@ -169,7 +168,6 @@ class ASTVisitor(Visitor):
         # decode args
         for n, arg in enumerate(args):
             argOut = deque()
-            hasGlobing = False
             for subArg in arg:
                 # ['a','*.py'] c.py d.py a
                 # ['*.py']

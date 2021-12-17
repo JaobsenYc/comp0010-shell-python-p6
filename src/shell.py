@@ -1,10 +1,6 @@
-import re
 import sys
 import os
-from os import listdir
 from collections import deque
-from glob import glob
-from apps import *
 from parsercombinator import command
 from visitor import ASTVisitor
 import traceback

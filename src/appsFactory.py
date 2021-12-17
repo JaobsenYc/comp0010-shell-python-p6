@@ -1,4 +1,18 @@
-from apps import *
+from apps import (
+    Pwd,
+    Cd,
+    Echo,
+    Ls,
+    Cat,
+    Head,
+    Tail,
+    Grep,
+    Cut,
+    Find,
+    Sort,
+    Uniq,
+    LocalApp,
+)
 import re
 
 
