@@ -23,7 +23,7 @@ class AppDecorator:
         def newExec(args, stdin=None):
 
             executedProcess = cls.exec(args, stdin=stdin)
-            if executedProcess["exitcode"]:
+            if executedProcess["exit_code"]:
                 raise Exception("".join(executedProcess["stderr"]))
             else:
                 return executedProcess
@@ -36,10 +36,11 @@ class AppDecorator:
 
             try:
                 executedProcess = cls.exec(args, stdin=stdin)
-                if executedProcess["exitcode"]:
+                if executedProcess["exit_code"]:
                     raise Exception(
                         {"command": args, "stderr": "".join(executedProcess["stderr"])}
                     )
+                return executedProcess
             except Exception as e:
                 details = e.args[0]
                 print("{}: {}".format(details["command"], details["stderr"]))

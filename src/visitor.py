@@ -55,7 +55,7 @@ class ASTVisitor(Visitor):
         quotedPart = singleQuote.quotedPart
         res_deque = deque()
         res_deque.append(quotedPart)
-        return {"stdout": res_deque, "stderr": deque(), "exitcode": 0}
+        return {"stdout": res_deque, "stderr": deque(), "exit_code": 0}
 
     def visitDoubleQuote(self, doubleQuote):
         containSubstitution, quotedPart = (
@@ -79,21 +79,21 @@ class ASTVisitor(Visitor):
 
         res_deque = deque()
         res_deque.append(res)
-        return {"stdout": res_deque, "stderr": deque(), "exitcode": 0}
+        return {"stdout": res_deque, "stderr": deque(), "exit_code": 0}
 
     def visitSingleQuote(self, singleQuote):
         res = deque()
         res.append(singleQuote.quotedPart)
-        return {"stdout": res, "stderr": deque(), "exitcode": 0}
+        return {"stdout": res, "stderr": deque(), "exit_code": 0}
 
     def visitSub(self, sub):
         ast = command.parse(sub.quoted)
         out = ast.accept(self)
-        if not out["exitcode"]:
+        if not out["exit_code"]:
             out["stdout"] = deque(
                 "".join(out["stdout"]).strip("\n ").replace("\n", " ")
             )
-            return {"stdout": out, "stderr": deque(), "exitcode": 0}
+            return {"stdout": out, "stderr": deque(), "exit_code": 0}
         else:
             return out
 
@@ -110,10 +110,10 @@ class ASTVisitor(Visitor):
                 return {
                     "stdout": deque(),
                     "stderr": deque().append("No such file or directory"),
-                    "exitcode": 1,
+                    "exit_code": 1,
                 }
 
-        return {"stdout": out, "stderr": deque(), "exitcode": 0}
+        return {"stdout": out, "stderr": deque(), "exit_code": 0}
 
     def visitRedirectOut(self, redirectOut, stdin=None):
         fs = glob(redirectOut.arg) or [redirectOut.arg]
@@ -180,7 +180,7 @@ class ASTVisitor(Visitor):
                     or isinstance(subArg, SingleQuote)
                 ):
                     executedProcess = subArg.accept(self)
-                    if executedProcess["exitcode"]:
+                    if executedProcess["exit_code"]:
                         print(executedProcess["stderr"].pop())
                     else:
                         argOut.append("".join(executedProcess["stdout"]))
@@ -191,38 +191,45 @@ class ASTVisitor(Visitor):
                     argOut.append(subArg)
 
             parsedArg.append("".join(argOut))
-            globbed_result.append(glob(parsedArg[-1]))
+            if n in glob_index:
+                globbed_result.append(glob(parsedArg[-1]))
 
         app = factory.getApp(appName)
 
         if len(glob_index) > 0:
-            # in case have multiple glob
-            glob_pairs = product(globbed_result)
+            if len(glob_index) > 1:
+                # in case have multiple glob
+                glob_pairs = product(globbed_result)
+            else:
+                glob_pairs = globbed_result[0]
 
-            count = 0
             for pair in glob_pairs:
                 argsForThisPair = []
+                count = 0
                 for arg_index in range(len(parsedArg)):
                     if arg_index in glob_index:
-                        argsForThisPair.append(pair[count])
+                        if len(glob_index) == 1:
+                            argsForThisPair.append(pair)
+                        else:
+                            argsForThisPair.append(pair[count])
                     else:
                         argsForThisPair.append(parsedArg[arg_index])
+                    count += 1
 
-                if len(parsedArg) == 1:
-                    argsForThisPair = argsForThisPair[0]
+                # if len(glob_index) == 1:
+                #     argsForThisPair = argsForThisPair[0]
 
-                out.extend(app.newExec(argsForThisPair, stdin=stdin))
+                out.extend(app.newExec(argsForThisPair, stdin=stdin)["stdout"])
         else:
-            temp = app.newExec(parsedArg, stdin=stdin)
-            out.extend(temp)
+            out.extend(app.newExec(parsedArg, stdin=stdin)["stdout"])
 
         # print("call: {}, out: {}", call, out)
 
         if redirectOut:
             redirectOut.accept(self, stdin=out)
-            return {"stdout": deque(), "stderr": deque(), "exitcode": 0}
+            return {"stdout": deque(), "stderr": deque(), "exit_code": 0}
         else:
-            return {"stdout": out, "stderr": deque(), "exitcode": 0}
+            return {"stdout": out, "stderr": deque(), "exit_code": 0}
 
     def visitSeq(self, seq):
         left = seq.left
@@ -232,7 +239,7 @@ class ASTVisitor(Visitor):
         outRight = right.accept(self)
 
         outLeft.extend(outRight)
-        return {"stdout": outLeft, "stderr": deque(), "exitcode": 0}
+        return {"stdout": outLeft, "stderr": deque(), "exit_code": 0}
 
     def visitPipe(self, pipe):  # what if | has redirectOut before?
         left = pipe.left
@@ -241,7 +248,7 @@ class ASTVisitor(Visitor):
         outLeft = left.accept(self)
         outRight = right.accept(self, input=outLeft)
 
-        return {"stdout": outRight, "stderr": deque(), "exitcode": 0}
+        return {"stdout": outRight, "stderr": deque(), "exit_code": 0}
 
 
 if __name__ == "__main__":
