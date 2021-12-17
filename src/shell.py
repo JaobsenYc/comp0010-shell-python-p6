@@ -7,6 +7,7 @@ from glob import glob
 from apps import *
 from parsercombinator import command
 from visitor import ASTVisitor
+import traceback
 
 # def eval()
 
@@ -28,8 +29,8 @@ if __name__ == "__main__":
                 print("".join(out["stderr"]), end="")
             else:
                 print("".join(out["stdout"]), end="")
-        except Exception as e:
-            print(sys.stderr.write(f"{e}\n"))
+        except Exception:
+            print(traceback.format_exc(), file=sys.stderr)
 
         # while len(out) > 0:
         #     line = out.popleft()
@@ -45,7 +46,6 @@ if __name__ == "__main__":
 
             # while len(out) > 0:
             #     line = out.popleft()
-
             #     print(line, end="")
             try:
                 out = cmd.accept(visitor)
@@ -54,5 +54,5 @@ if __name__ == "__main__":
                     print("".join(out["stderr"]), end="")
                 else:
                     print("".join(out["stdout"]), end="")
-            except Exception as e:
-                print(sys.stderr.write(f"{e}\n"))
+            except Exception:
+                print(traceback.format_exc(), file=sys.stderr)

@@ -8,7 +8,7 @@ from abstract_syntax_tree import (
     SingleQuote,
     Substitution,
 )
-from parsercombinator import command
+from parsercombinator import command, doubleQuoted
 from glob import glob
 from appsFactory import AppsFactory
 from collections import deque
@@ -63,27 +63,25 @@ class ASTVisitor(Visitor):
             doubleQuote.quotedPart,
         )
 
-        res = ""
-        err = None
+        res = deque()
+        err = deque()
 
         if not containSubstitution:
-            res = "{}".format("".join(quotedPart))
+            res.append("".join(quotedPart))
         else:
             for part in quotedPart:
                 if not isinstance(part, Substitution):
-                    res += part
+                    res.append(part)
                 else:
                     executed = part.accept(self)
                     out = executed["stdout"]
-                    err = executed["stderr"]
-                    res = "".join(out)
+                    err.extend(executed["stderr"])
+                    res.extend("".join(out))
 
-        res_deque = deque()
-        res_deque.append(res)
         return {
-            "stdout": res_deque,
-            "stderr": deque() if not err else err,
-            "exit_code": 0 if not err else 1,
+            "stdout": res,
+            "stderr": err,
+            "exit_code": len(err),
         }
 
     # def visitSingleQuote(self, singleQuote):
@@ -96,7 +94,7 @@ class ASTVisitor(Visitor):
         executed = ast.accept(self)
         # if not out["exit_code"]:
         out = executed["stdout"]
-        out_new = deque("".join(out["stdout"]).strip("\n ").replace("\n", " "))
+        out_new = deque("".join(out).strip("\n ").replace("\n", " "))
         return {
             "stdout": out_new,
             "stderr": executed["stderr"],
@@ -139,7 +137,10 @@ class ASTVisitor(Visitor):
 
         # "`echo echo` foo"
         if isinstance(appName, Substitution):
-            appName = "".join(appName.accept(self)).strip(" \n")
+            subExecuted = appName.accept(self)
+            if subExecuted["exit_code"] != 0:
+                raise Exception(f"Cannot substitute {appName} as app name")
+            appName = "".join(subExecuted["stdout"]).strip(" \n")
 
         stdin, redirectOut = None, None
         out = deque()
@@ -243,9 +244,11 @@ class ASTVisitor(Visitor):
         outLeft = left.accept(self)
         outRight = right.accept(self)
 
+        outLeft["stdout"].extend(outRight["stdout"])
+        outLeft["stderr"].extend(outRight["stderr"])
         return {
-            "stdout": outLeft["stdout"].extend(outRight["stdout"]),
-            "stderr": outLeft["stderr"].extend(outRight["stderr"]),
+            "stdout": outLeft["stdout"],
+            "stderr": outLeft["stderr"],
             "exit_code": outLeft["exit_code"] or outRight["exit_code"],
         }
 
@@ -255,10 +258,10 @@ class ASTVisitor(Visitor):
 
         outLeft = left.accept(self)
         outRight = right.accept(self, input=outLeft["stdout"])
-
+        outLeft["stderr"].extend(outRight["stderr"])
         return {
             "stdout": outRight["stdout"],
-            "stderr": outLeft["stderr"].extend(outRight["stderr"]),
+            "stderr": outLeft["stderr"],
             "exit_code": outLeft["exit_code"] or outRight["exit_code"],
         }
 
