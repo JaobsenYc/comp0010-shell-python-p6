@@ -49,7 +49,7 @@ class Visitor(ABC):
         pass
 
 
-# @singleton # or use an instance?
+# @singleton
 class ASTVisitor(Visitor):
     def visitSingleQuote(self, singleQuote):
         quotedPart = singleQuote.quotedPart
