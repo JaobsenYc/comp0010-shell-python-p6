@@ -55,7 +55,7 @@ class ASTVisitor(Visitor):
         quotedPart = singleQuote.quotedPart
         res_deque = deque()
         res_deque.append(quotedPart)
-        return res_deque
+        return {"stdout": res_deque, "stderr": deque(), "exitcode": 0}
 
     def visitDoubleQuote(self, doubleQuote):
         containSubstitution, quotedPart = (
@@ -79,23 +79,23 @@ class ASTVisitor(Visitor):
 
         res_deque = deque()
         res_deque.append(res)
-        return res_deque
+        return {"stdout": res_deque, "stderr": deque(), "exitcode": 0}
 
     def visitSingleQuote(self, singleQuote):
         res = deque()
         res.append(singleQuote.quotedPart)
-        return res
+        return {"stdout": res, "stderr": deque(), "exitcode": 0}
 
     def visitSub(self, sub):
         ast = command.parse(sub.quoted)
         out = ast.accept(self)
-        # input = list(stdin)
-        # lines = []
-        # [lines.extend(i.splitlines(True)) for i in input]
-
-        out = deque("".join(out).strip("\n ").replace("\n", " "))
-
-        return out
+        if not out["exitcode"]:
+            out["stdout"] = deque(
+                "".join(out["stdout"]).strip("\n ").replace("\n", " ")
+            )
+            return {"stdout": out, "stderr": deque(), "exitcode": 0}
+        else:
+            return out
 
     def visitRedirectIn(self, redirectIn):
         out = deque()
@@ -103,10 +103,17 @@ class ASTVisitor(Visitor):
         fs = glob(redirectIn.arg)
 
         for i in fs:
-            with open(i) as f:
-                out.extend(f.readlines())
+            try:
+                with open(i) as f:
+                    out.extend(f.readlines())
+            except FileNotFoundError as fnfe:
+                return {
+                    "stdout": deque(),
+                    "stderr": deque().append("No such file or directory"),
+                    "exitcode": 1,
+                }
 
-        return out
+        return {"stdout": out, "stderr": deque(), "exitcode": 0}
 
     def visitRedirectOut(self, redirectOut, stdin=None):
         fs = glob(redirectOut.arg) or [redirectOut.arg]
@@ -140,10 +147,15 @@ class ASTVisitor(Visitor):
 
         for r in redirects:
             if isinstance(r, RedirectIn) and not stdin:  # check type
-                stdin = r.accept(self)
+                try:
+                    stdin = r.accept(self)
+                except FileNotFoundError as fnfe:
+                    details = fnfe.args[0]
+                    print(details["stderr"].pop())
             elif isinstance(r, RedirectOut) and not redirectOut:
                 redirectOut = r
             else:
+                # not related to unsafe app
                 raise Exception("invalid redirections")
 
         # otherwise, stdin will overwrite input from last call result piped in
@@ -167,7 +179,11 @@ class ASTVisitor(Visitor):
                     or isinstance(subArg, Substitution)
                     or isinstance(subArg, SingleQuote)
                 ):
-                    argOut.append("".join(subArg.accept(self)))
+                    executedProcess = subArg.accept(self)
+                    if executedProcess["exitcode"]:
+                        print(executedProcess["stderr"].pop())
+                    else:
+                        argOut.append("".join(executedProcess["stdout"]))
                 elif isinstance(subArg, str) and "*" in subArg:
                     glob_index.append(n)
                     argOut.append(subArg)
@@ -195,17 +211,18 @@ class ASTVisitor(Visitor):
                 if len(parsedArg) == 1:
                     argsForThisPair = argsForThisPair[0]
 
-                out.extend(app.exec(argsForThisPair, stdin=stdin))
+                out.extend(app.newExec(argsForThisPair, stdin=stdin))
         else:
-            out.extend(app.exec(parsedArg, stdin=stdin))
+            temp = app.newExec(parsedArg, stdin=stdin)
+            out.extend(temp)
 
         # print("call: {}, out: {}", call, out)
 
         if redirectOut:
             redirectOut.accept(self, stdin=out)
-            return deque()
+            return {"stdout": deque(), "stderr": deque(), "exitcode": 0}
         else:
-            return out
+            return {"stdout": out, "stderr": deque(), "exitcode": 0}
 
     def visitSeq(self, seq):
         left = seq.left
@@ -215,7 +232,7 @@ class ASTVisitor(Visitor):
         outRight = right.accept(self)
 
         outLeft.extend(outRight)
-        return outLeft
+        return {"stdout": outLeft, "stderr": deque(), "exitcode": 0}
 
     def visitPipe(self, pipe):  # what if | has redirectOut before?
         left = pipe.left
@@ -224,7 +241,7 @@ class ASTVisitor(Visitor):
         outLeft = left.accept(self)
         outRight = right.accept(self, input=outLeft)
 
-        return outRight
+        return {"stdout": outRight, "stderr": deque(), "exitcode": 0}
 
 
 if __name__ == "__main__":

@@ -8,6 +8,8 @@ from apps import *
 from parsercombinator import command
 from visitor import ASTVisitor
 
+# def eval()
+
 if __name__ == "__main__":
     visitor = ASTVisitor()
     out = deque()
@@ -24,7 +26,7 @@ if __name__ == "__main__":
         # while len(out) > 0:
         #     line = out.popleft()
         #     print(line, end="")
-        print("".join(out), end="")
+        print("".join(out["stdout"]), end="")
     else:
         while True:
             print(os.getcwd() + "> ", end="")
@@ -37,4 +39,4 @@ if __name__ == "__main__":
             #     line = out.popleft()
 
             #     print(line, end="")
-            print("".join(out), end="")
+            print("".join(out["stdout"]), end="")

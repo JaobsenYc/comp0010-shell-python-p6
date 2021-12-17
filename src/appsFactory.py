@@ -1,4 +1,5 @@
 from apps import *
+import re
 
 
 def singleton(cls):
@@ -11,6 +12,40 @@ def singleton(cls):
         return _instance[cls]
 
     return inner
+
+
+# class ShellException(Exception):
+
+
+@singleton
+class AppDecorator:
+    def decorateUnsafe(self, cls):
+        def newExec(args, stdin=None):
+
+            executedProcess = cls.exec(args, stdin=stdin)
+            if executedProcess["exitcode"]:
+                raise Exception("".join(executedProcess["stderr"]))
+            else:
+                return executedProcess
+
+        cls.exec = newExec
+        return cls
+
+    def decorateSafe(self, cls):
+        def newExec(args, stdin=None):
+
+            try:
+                executedProcess = cls.exec(args, stdin=stdin)
+                if executedProcess["exitcode"]:
+                    raise Exception(
+                        {"command": args, "stderr": "".join(executedProcess["stderr"])}
+                    )
+            except Exception as e:
+                details = e.args[0]
+                print("{}: {}".format(details["command"], details["stderr"]))
+
+        cls.newExec = newExec
+        return cls
 
 
 @singleton
@@ -31,15 +66,16 @@ class AppsFactory:
             "uniq": Uniq(),
         }
 
-    def getApp(self, appName, *remain):
-        # appName = appName[0].upper() + appName[1:]
-        # if appName not in self.menu:
-        #     cls = type(
-        #         appName, (), {}
-        #     )
-        #     self.menu[appName] = cls
-        # else:
-        #     cls = self.menu[appName]
+        self.appType = {
+            "^_": lambda name, menu, default: AppDecorator().decorateUnsafe(
+                menu.get(name[1:], default(name[1:]))
+            ),
+            ".*": lambda name, menu, default: AppDecorator().decorateSafe(
+                menu.get(name, default(name))
+            ),
+        }
 
-        app = self.menu.get(appName, LocalApp(appName))
-        return app
+    def getApp(self, appName, *remain):
+        for regex, decorator in self.appType.items():
+            if re.search(regex, appName):
+                return decorator(appName, self.menu, LocalApp)
