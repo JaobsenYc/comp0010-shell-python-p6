@@ -14,6 +14,12 @@ class SingleQuote(AST):
     def accept(self, visitor):
         return visitor.visitSingleQuote(self)
 
+    def __str__(self):
+        return "SingleQ({})".format(str(self.quotedPart))
+
+    def __repr__(self):
+        return "SingleQ({})".format(str(self.quotedPart))
+
 
 class DoubleQuote(AST):
     def __init__(self, quotedPart, containSubstitution):
@@ -76,10 +82,6 @@ class RedirectOut(AST):
 class Call(AST):
     def __init__(self, redirects, appName, args) -> None:
         self.redirects = redirects
-        # if len(appName) == 1:
-        #     self.appName = appName[0]
-        # else:
-        #     raise Exception("wrong appName input")
         self.appName = appName
         self.args = args
 
