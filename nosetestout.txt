@@ -1,0 +1,344 @@
+...............E.F.E.E..FFF.FE..FF.FFEFEEEFEFFFFF.E
+======================================================================
+ERROR: Failure: ImportError (cannot import name 'eval' from 'shell' (/comp0010/src/shell.py))
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.8/site-packages/nose/failure.py", line 39, in runTest
+    raise self.exc_val.with_traceback(self.tb)
+  File "/usr/local/lib/python3.8/site-packages/nose/loader.py", line 417, in loadTestsFromName
+    module = self.importer.importFromPath(
+  File "/usr/local/lib/python3.8/site-packages/nose/importer.py", line 47, in importFromPath
+    return self.importFromDir(dir_path, fqname)
+  File "/usr/local/lib/python3.8/site-packages/nose/importer.py", line 94, in importFromDir
+    mod = load_module(part_fqname, fh, filename, desc)
+  File "/usr/local/lib/python3.8/imp.py", line 234, in load_module
+    return load_source(name, filename, file)
+  File "/usr/local/lib/python3.8/imp.py", line 171, in load_source
+    module = _load(spec)
+  File "<frozen importlib._bootstrap>", line 702, in _load
+  File "<frozen importlib._bootstrap>", line 671, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 843, in exec_module
+  File "<frozen importlib._bootstrap>", line 219, in _call_with_frames_removed
+  File "/comp0010/test/test_shell.py", line 3, in <module>
+    from shell import eval
+ImportError: cannot import name 'eval' from 'shell' (/comp0010/src/shell.py)
+
+======================================================================
+ERROR: test_visit_call_args_exec_error (test_visitor.TestASTVisitor)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/comp0010/test/test_visitor.py", line 269, in test_visit_call_args_exec_error
+    self.assertEqual(
+TypeError: assertEqual() missing 1 required positional argument: 'second'
+
+======================================================================
+ERROR: test_visit_call_args_multiple_glob (test_visitor.TestASTVisitor)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/comp0010/test/test_visitor.py", line 293, in test_visit_call_args_multiple_glob
+    out = self.visitor.visitCall(i)
+  File "/comp0010/src/visitor.py", line 248, in visitCall
+    argsForThisPair.append(pair[count])
+IndexError: tuple index out of range
+
+======================================================================
+ERROR: test_visit_doublequote_error (test_visitor.TestASTVisitor)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/comp0010/test/test_visitor.py", line 82, in test_visit_doublequote_error
+    out = self.visitor.visitDoubleQuote(i)
+  File "/comp0010/src/visitor.py", line 85, in visitDoubleQuote
+    executed = part.accept(self)
+  File "/comp0010/src/abstract_syntax_tree.py", line 44, in accept
+    res = visitor.visitSub(self)
+  File "/comp0010/src/visitor.py", line 103, in visitSub
+    executed = ast.accept(self)
+  File "/comp0010/src/abstract_syntax_tree.py", line 89, in accept
+    return visitor.visitCall(self, input=input)
+  File "/comp0010/src/visitor.py", line 257, in visitCall
+    executed = app.exec(parsedArg, stdin=stdin)
+  File "/comp0010/src/appsFactory.py", line 40, in newExec
+    raise Exception("".join(executedProcess["stderr"]))
+Exception: wrong number of command line arguments
+
+======================================================================
+ERROR: test_visit_redirectout (test_visitor.TestASTVisitor)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/comp0010/test/test_visitor.py", line 127, in test_visit_redirectout
+    i = RedirectOut("testRedirectout.txt", stdin="aaa\nbbb\nccc")
+TypeError: __init__() got an unexpected keyword argument 'stdin'
+
+======================================================================
+ERROR: test_visit_redirectout_no_stdin (test_visitor.TestASTVisitor)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/comp0010/test/test_visitor.py", line 137, in test_visit_redirectout_no_stdin
+    self.visitor.visitRedirectOut(i)
+  File "/comp0010/src/visitor.py", line 149, in visitRedirectOut
+    while len(stdin) > 0:
+TypeError: object of type 'NoneType' has no len()
+
+======================================================================
+ERROR: test_visit_seq_left_error_right_error_unsafe (test_visitor.TestASTVisitor)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/comp0010/test/test_visitor.py", line 347, in test_visit_seq_left_error_right_error_unsafe
+    out = self.visitor.visitSeq(i)
+  File "/comp0010/src/visitor.py", line 276, in visitSeq
+    outLeft = left.accept(self)
+  File "/comp0010/src/abstract_syntax_tree.py", line 89, in accept
+    return visitor.visitCall(self, input=input)
+  File "/comp0010/src/visitor.py", line 257, in visitCall
+    executed = app.exec(parsedArg, stdin=stdin)
+  File "/comp0010/src/appsFactory.py", line 40, in newExec
+    raise Exception("".join(executedProcess["stderr"]))
+Exception: Ls: notExist1: No such directory
+
+======================================================================
+ERROR: test_visit_seq_left_error_unsafe (test_visitor.TestASTVisitor)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/comp0010/test/test_visitor.py", line 311, in test_visit_seq_left_error_unsafe
+    out = self.visitor.visitSeq(i)
+  File "/comp0010/src/visitor.py", line 276, in visitSeq
+    outLeft = left.accept(self)
+  File "/comp0010/src/abstract_syntax_tree.py", line 89, in accept
+    return visitor.visitCall(self, input=input)
+  File "/comp0010/src/visitor.py", line 257, in visitCall
+    executed = app.exec(parsedArg, stdin=stdin)
+  File "/comp0010/src/appsFactory.py", line 40, in newExec
+    raise Exception("".join(executedProcess["stderr"]))
+Exception: Ls: notExist: No such directory
+
+======================================================================
+ERROR: test_visit_seq_right_error_unsafe (test_visitor.TestASTVisitor)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/comp0010/test/test_visitor.py", line 329, in test_visit_seq_right_error_unsafe
+    out = self.visitor.visitSeq(i)
+  File "/comp0010/src/visitor.py", line 277, in visitSeq
+    outRight = right.accept(self)
+  File "/comp0010/src/abstract_syntax_tree.py", line 89, in accept
+    return visitor.visitCall(self, input=input)
+  File "/comp0010/src/visitor.py", line 257, in visitCall
+    executed = app.exec(parsedArg, stdin=stdin)
+  File "/comp0010/src/appsFactory.py", line 40, in newExec
+    raise Exception("".join(executedProcess["stderr"]))
+Exception: Ls: notExist: No such directory
+
+======================================================================
+ERROR: test_visit_substitution_error (test_visitor.TestASTVisitor)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/comp0010/test/test_visitor.py", line 98, in test_visit_substitution_error
+    out = self.visitor.visitSub(i)
+  File "/comp0010/src/visitor.py", line 103, in visitSub
+    executed = ast.accept(self)
+  File "/comp0010/src/abstract_syntax_tree.py", line 89, in accept
+    return visitor.visitCall(self, input=input)
+  File "/comp0010/src/visitor.py", line 257, in visitCall
+    executed = app.exec(parsedArg, stdin=stdin)
+  File "/comp0010/src/appsFactory.py", line 38, in newExec
+    executedProcess = originalExec(args, stdin=stdin)
+  File "/comp0010/src/appsFactory.py", line 40, in newExec
+    raise Exception("".join(executedProcess["stderr"]))
+Exception: wrong number of command line arguments
+
+======================================================================
+FAIL: test_visit_call_appname_substitution_error (test_visitor.TestASTVisitor)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/comp0010/test/test_visitor.py", line 167, in test_visit_call_appname_substitution_error
+    self.assertEqual(
+AssertionError: 'Cannot substitute cat notExist.txt as app name' != 'Cat: notExist.txt: No such file or directory'
+- Cannot substitute cat notExist.txt as app name
++ Cat: notExist.txt: No such file or directory
+
+
+======================================================================
+FAIL: test_visit_call_no_redirectin_but_input (test_visitor.TestASTVisitor)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/comp0010/test/test_visitor.py", line 210, in test_visit_call_no_redirectin_but_input
+    self.assertEqual("".join(out["stdout"]), "input\ncontent")
+AssertionError: '\n' != 'input\ncontent'
+- 
++ input
++ content
+
+======================================================================
+FAIL: test_visit_call_redirectin (test_visitor.TestASTVisitor)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/comp0010/test/test_visitor.py", line 178, in test_visit_call_redirectin
+    self.assertEqual("".join(out["stdout"]), "abc\nadc\nabc\ndef")
+AssertionError: '\n' != 'abc\nadc\nabc\ndef'
+- 
++ abc
++ adc
++ abc
++ def
+
+======================================================================
+FAIL: test_visit_call_redirectin_overwrite_input (test_visitor.TestASTVisitor)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/comp0010/test/test_visitor.py", line 223, in test_visit_call_redirectin_overwrite_input
+    self.assertEqual("".join(out["stdout"]), "redirectin\ncontent")
+AssertionError: '\n' != 'redirectin\ncontent'
+- 
++ redirectin
++ content
+
+======================================================================
+FAIL: test_visit_call_redirectout_return (test_visitor.TestASTVisitor)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/comp0010/test/test_visitor.py", line 190, in test_visit_call_redirectout_return
+    self.assertEqual(out["stderr"], "")
+AssertionError: deque([]) != ''
+
+======================================================================
+FAIL: test_visit_pipe_outright_error_unsafe (test_visitor.TestASTVisitor)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/comp0010/test/test_visitor.py", line 405, in test_visit_pipe_outright_error_unsafe
+    self.assertEqual("".join(out["stdout"]), "")
+AssertionError: 'src\nfile.txt\ndoc\nREADME.md\nsystem_tes[208 chars]xt\n' != ''
+- src
+- file.txt
+- doc
+- README.md
+- system_test
+- test2.txt
+- siqi_note.md
+- test1.txt
+- nosetestout.txt
+- nosetests.xml
+- sh
+- test
+- Dockerfile
+- dir1
+- requirements.txt
+- tools
+- cut
+- testRedirectinOverwriteInput.txt
+- testRedirectoutReturn.txt
+- file1.txt
+- file2.txt
+
+
+======================================================================
+FAIL: test_visit_pipe_with_outleft (test_visitor.TestASTVisitor)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/comp0010/test/test_visitor.py", line 387, in test_visit_pipe_with_outleft
+    self.assertEqual("".join(out["stdout"]), "left\noutput")
+AssertionError: '\n' != 'left\noutput'
+- 
++ left
++ output
+
+======================================================================
+FAIL: test_visit_redirectin_error (test_visitor.TestASTVisitor)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/comp0010/test/test_visitor.py", line 120, in test_visit_redirectin_error
+    self.assertRaises(
+AssertionError: FileNotFoundError not raised by visitRedirectIn
+
+======================================================================
+FAIL: test_visit_redirectin_glob (test_visitor.TestASTVisitor)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/comp0010/test/test_visitor.py", line 113, in test_visit_redirectin_glob
+    self.assertEqual(
+AssertionError: 'test2test1\nf\nfsdg\nsb\ne\ng\nbdb\nsbd\[17095 chars]tent' != ['abc\nadc\nabc\ndef', 'file2\ncontent']
+
+======================================================================
+FAIL: test_visit_redirectout_error (test_visitor.TestASTVisitor)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/comp0010/test/test_visitor.py", line 145, in test_visit_redirectout_error
+    self.visitor.visitRedirectIn(RedirectIn("*.txt"))
+AssertionError: Exception not raised
+
+======================================================================
+FAIL: test_visit_seq_no_error (test_visitor.TestASTVisitor)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/comp0010/test/test_visitor.py", line 369, in test_visit_seq_no_error
+    self.assertEqual("".join(out["stdout"]), "left\noutputright\noutput")
+AssertionError: 'left\noutput\nright\noutput\n' != 'left\noutputright\noutput'
+  left
++ outputright
+- output
+?       -
++ output- right
+- output
+
+
+======================================================================
+FAIL: test_visit_singlequote_backquote (test_visitor.TestASTVisitor)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/comp0010/test/test_visitor.py", line 51, in test_visit_singlequote_backquote
+    self.assertEqual("".join(out["stdout"]), "`echo hello`")
+AssertionError: "'`echo hello`'" != '`echo hello`'
+- '`echo hello`'
+? -            -
++ `echo hello`
+
+
+======================================================================
+FAIL: test_visit_singlequote_disable_doublequote (test_visitor.TestASTVisitor)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/comp0010/test/test_visitor.py", line 44, in test_visit_singlequote_disable_doublequote
+    self.assertEqual("".join(out["stdout"]), '""')
+AssertionError: '\'""\'' != '""'
+- '""'
+? -  -
++ ""
+
+
+======================================================================
+FAIL: test_visit_singlequote_empty (test_visitor.TestASTVisitor)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/comp0010/test/test_visitor.py", line 30, in test_visit_singlequote_empty
+    self.assertEqual("".join(out["stdout"]), "")
+AssertionError: "''" != ''
+- ''
++ 
+
+
+======================================================================
+FAIL: test_visit_singlequote_space (test_visitor.TestASTVisitor)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/comp0010/test/test_visitor.py", line 37, in test_visit_singlequote_space
+    self.assertEqual("".join(out["stdout"]), "  ")
+AssertionError: "'  '" != '  '
+- '  '
++   
+
+
+======================================================================
+FAIL: test_visit_singlequote_substitution_error (test_visitor.TestASTVisitor)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/comp0010/test/test_visitor.py", line 58, in test_visit_singlequote_substitution_error
+    self.assertEqual("".join(out["stdout"]), "")
+AssertionError: "'`echo hello`'" != ''
+- '`echo hello`'
++ 
+
+
+----------------------------------------------------------------------
+Ran 51 tests in 1.209s
+
+FAILED (errors=10, failures=16)
+Serving HTTP on 0.0.0.0 port 8000 (http://0.0.0.0:8000/) ...
+172.17.0.1 - - [18/Dec/2021 17:33:21] "GET /index.html HTTP/1.1" 200 -

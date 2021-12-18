@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 class AST(ABC):
     @abstractmethod
     def accept(self, visitor):
-        raise Exception("NotImplementedException")
+        """Abstract accept method"""
 
 
 class SingleQuote(AST):
