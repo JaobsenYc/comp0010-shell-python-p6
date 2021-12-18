@@ -11,6 +11,12 @@ class TestShell(unittest.TestCase):
         self.assertEqual(out.popleft(), "foo\n")
         self.assertEqual(len(out), 0)
 
+    def test_unsafe(self):
+        pass
+
+    def test_localapp(self):
+        pass
+
 
 if __name__ == "__main__":
     unittest.main()

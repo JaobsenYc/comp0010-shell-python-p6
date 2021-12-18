@@ -122,6 +122,7 @@ class ASTVisitor(Visitor):
         fs = glob(redirectIn.arg)
 
         for i in fs:
+
             try:
                 with open(i) as f:
                     out.extend(f.readlines())
@@ -151,7 +152,7 @@ class ASTVisitor(Visitor):
 
     """
     :param call: this is a AST().Call object
-    :keyword stdin: this is optional, default as None; io redirection and pipe content
+    :keyword input: this is optional, default as None; io redirection and pipe content
     :returns: this is a dictionary of srdout, stderr and exit_code
     """
 
