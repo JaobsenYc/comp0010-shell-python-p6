@@ -58,7 +58,6 @@ class Substitution(AST):
 class RedirectIn(AST):
     def __init__(self, arg) -> None:
         self.arg = arg
-        assert len(arg) >= 1
 
     def accept(self, visitor):
         return visitor.visitRedirectIn(self)
