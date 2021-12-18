@@ -205,9 +205,8 @@ class TestASTVisitor(unittest.TestCase):
             redirects=[],
             appName="echo",
             args=[],
-            input="input\ncontent",
         )
-        out = self.visitor.visitCall(i)
+        out = self.visitor.visitCall(i, input="input\ncontent")
         self.assertEqual("".join(out["stdout"]), "input\ncontent")
         self.assertEqual("".join(out["stderr"]), "")
         self.assertEqual(out["exit_code"], 0)
@@ -219,9 +218,8 @@ class TestASTVisitor(unittest.TestCase):
             redirects=[RedirectIn("testRedirectinOverwriteInput.txt")],
             appName="echo",
             args=[],
-            input="input\ncontent",
         )
-        out = self.visitor.visitCall(i)
+        out = self.visitor.visitCall(i, input="input\ncontent")
         self.assertEqual("".join(out["stdout"]), "redirectin\ncontent")
         self.assertEqual("".join(out["stderr"]), "")
         self.assertEqual(out["exit_code"], 0)
