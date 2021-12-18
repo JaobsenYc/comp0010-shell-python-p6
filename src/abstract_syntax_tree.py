@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from collections.abc import Iterable
 
 
 class AST(ABC):
@@ -9,6 +10,7 @@ class AST(ABC):
 
 class SingleQuote(AST):
     def __init__(self, quotedPart):
+        assert type(quotedPart) == str
         self.quotedPart = quotedPart
 
     def accept(self, visitor):
@@ -25,6 +27,7 @@ class DoubleQuote(AST):
     def __init__(self, quotedPart, containSubstitution):
         self.containSubstitution = containSubstitution
         self.quotedPart = quotedPart
+        assert isinstance(self.quotedPart, Iterable)
 
     def accept(self, visitor):
         return visitor.visitDoubleQuote(self)
@@ -39,6 +42,7 @@ class DoubleQuote(AST):
 class Substitution(AST):
     def __init__(self, quoted):
         self.quoted = "{}".format(quoted)
+        assert isinstance(self.quoted, str)
 
     def accept(self, visitor):
         res = visitor.visitSub(self)
@@ -54,6 +58,7 @@ class Substitution(AST):
 class RedirectIn(AST):
     def __init__(self, arg) -> None:
         self.arg = arg
+        assert len(arg) >= 1
 
     def accept(self, visitor):
         return visitor.visitRedirectIn(self)
@@ -68,6 +73,7 @@ class RedirectIn(AST):
 class RedirectOut(AST):
     def __init__(self, arg) -> None:
         self.arg = arg
+        assert len(arg) == 1
 
     def accept(self, visitor, stdin=None):
         return visitor.visitRedirectOut(self, stdin)
@@ -84,6 +90,9 @@ class Call(AST):
         self.redirects = redirects
         self.appName = appName
         self.args = args
+        assert isinstance(args, Iterable)
+        assert all(isinstance(arg, Iterable) for arg in args)
+        assert len(redirects) < 2
 
     def accept(self, visitor, input=None):
         return visitor.visitCall(self, input=input)
@@ -99,6 +108,7 @@ class Seq(AST):
     def __init__(self, left, right) -> None:
         self.left = left
         self.right = right
+        assert left is not None and right is not None
 
     def accept(self, visitor):
         return visitor.visitSeq(self)
@@ -111,6 +121,7 @@ class Pipe(AST):
     def __init__(self, left, right) -> None:
         self.left = left
         self.right = right
+        assert left is not None and right is not None
 
     def accept(self, visitor):
         return visitor.visitPipe(self)
