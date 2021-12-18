@@ -4,7 +4,6 @@ from collections import deque
 import parsercombinator as pc
 from hypothesis import given
 from hypothesis import strategies as st
-from hypothesis_regex import regex
 
 
 class TestParserCombinator(unittest.TestCase):
@@ -14,7 +13,7 @@ class TestParserCombinator(unittest.TestCase):
         assert pc.lessThan.parse("<") == "<"
         assert pc.greaterThan.parse(">") == ">"
 
-    @given(regex(" *"))
+    @given(st.from_regex("^ *$"))
     def test_whitespace(self, spaces):
         assert pc.greaterThan.parse(spaces) == spaces
 
