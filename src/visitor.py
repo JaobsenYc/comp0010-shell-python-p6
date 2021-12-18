@@ -5,6 +5,7 @@ from src.abstract_syntax_tree import (
     RedirectOut,
     SingleQuote,
     Substitution,
+    Call,
 )
 from src.parsercombinator import command
 from glob import glob
@@ -69,11 +70,14 @@ class ASTVisitor(Visitor):
     """
 
     def visitDoubleQuote(self, doubleQuote):
+        assert isinstance(doubleQuote, DoubleQuote)
 
         containSubstitution, quotedPart = (
             doubleQuote.containSubstitution,
             doubleQuote.quotedPart,
         )
+        assert isinstance(containSubstitution, bool)
+        assert isinstance(quotedPart, list)
 
         res = deque()
         err = deque()
@@ -88,6 +92,7 @@ class ASTVisitor(Visitor):
                     executed = part.accept(self)
                     out = executed["stdout"]
                     err.extend(executed["stderr"])
+                    assert isinstance(out, deque)
                     res.extend("".join(out))
 
         return {
@@ -106,6 +111,7 @@ class ASTVisitor(Visitor):
         executed = ast.accept(self)
 
         out = executed["stdout"]
+        assert isinstance(out, deque)
         out_new = deque("".join(out).strip("\n ").replace("\n", " "))
 
         return {
@@ -120,15 +126,18 @@ class ASTVisitor(Visitor):
     """
 
     def visitRedirectIn(self, redirectIn):
+        assert isinstance(redirectIn, RedirectIn)
+
         out = deque()
 
         fs = glob(redirectIn.arg)
+        assert isinstance(fs, list)
 
         if len(fs) < 1:
             raise FileNotFoundError
+        assert len(fs) >= 1
 
         for i in fs:
-
             with open(i) as f:
                 out.extend(f.readlines())
 
@@ -141,11 +150,15 @@ class ASTVisitor(Visitor):
     """
 
     def visitRedirectOut(self, redirectOut, stdin=None):
+        assert stdin
+
         fs = glob(redirectOut.arg) or [redirectOut.arg]
         n = len(fs)
+        assert isinstance(fs, list)
 
         if n > 1:
             raise Exception("invalid redirection out")
+        assert n <= 1
 
         stdout_f = fs[0]
         with open(stdout_f, "w") as f:
@@ -165,91 +178,32 @@ class ASTVisitor(Visitor):
         appName = call.appName
         args = call.args
 
-        # "`echo echo` foo"
-        if isinstance(appName, Substitution):
-            subExecuted = appName.accept(self)
-            if subExecuted["exit_code"] != 0:
-                raise Exception(f"Cannot substitute {appName} as app name")
-            appName = "".join(subExecuted["stdout"]).strip(" \n")
-
-        stdin, redirectOut = None, None
+        factory = AppsFactory()
         out = deque()
         err = deque()
-        glob_index = []
-        globbed_result = []
-        parsedArg = []
 
-        factory = AppsFactory()
+        # "`echo echo` foo"
+        appName = self._getAppName(appName)
+        app = factory.getApp(appName)
 
-        for r in redirects:
-            if isinstance(r, RedirectIn) and not stdin:
-                stdin = r.accept(self)["stdout"]
-            elif isinstance(r, RedirectOut) and not redirectOut:
-                redirectOut = r
-            else:
-                # not related to unsafe app, the error of system
-                raise Exception("invalid redirections")
+        try:
+            stdin, redirectOut = self._getRedirects(redirects)
+        except Exception as e:
+            raise e
 
         # otherwise, stdin will overwrite input from last call result piped in
         if input and not stdin:
             stdin = input
 
-        # check if args includes double quote that needs to further eval
-        # check glob in args and decode args
-        # args: [[],[]]
-        for n, arg in enumerate(args):
-            argOut = deque()
-
-            # arg: []
-            for subArg in arg:
-
-                if (
-                    isinstance(subArg, DoubleQuote)
-                    or isinstance(subArg, Substitution)
-                    or isinstance(subArg, SingleQuote)
-                ):
-                    executedProcess = subArg.accept(self)
-
-                    if executedProcess["exit_code"]:
-                        raise Exception(executedProcess["stderr"])
-                    else:
-                        argOut.append("".join(executedProcess["stdout"]))
-
-                # ['a','*.py']
-                elif isinstance(subArg, str) and "*" in subArg:
-                    glob_index.append(n)
-                    argOut.append(subArg)
-
-                else:
-                    argOut.append(subArg)
-
-            parsedArg.append("".join(argOut))
-            if n in glob_index:
-                globbed_result.append(glob(parsedArg[-1]))
-
-        app = factory.getApp(appName)
+        parsedArg, glob_index, globbed_result = self._getArgs(args)
 
         if len(glob_index) > 0:
-
-            glob_pairs = product(*globbed_result)
-
-            for pair in glob_pairs:
-                argsForThisPair = []
-                count = 0
-
-                for arg_index in range(len(parsedArg)):
-
-                    if arg_index in glob_index:
-                        argsForThisPair.append(pair[count])
-                        count += 1
-                    else:
-                        argsForThisPair.append(parsedArg[arg_index])
-
-                executed = app.exec(argsForThisPair, stdin=stdin)
-                out.extend(executed["stdout"])
-                err.extend(executed["stderr"])
+            final_args_lst = self._getGlobbedArg(parsedArg, glob_index, globbed_result)
         else:
-            executed = app.exec(parsedArg, stdin=stdin)
+            final_args_lst = [parsedArg]
+
+        for final_args in final_args_lst:
+            executed = app.exec(final_args, stdin=stdin)
             out.extend(executed["stdout"])
             err.extend(executed["stderr"])
 
@@ -298,3 +252,101 @@ class ASTVisitor(Visitor):
             "stderr": outLeft["stderr"],
             "exit_code": outLeft["exit_code"] or outRight["exit_code"],
         }
+
+    # check if args includes double quote that needs to further eval
+    # check glob in args and decode args
+    # args: [[],[]]
+    def _getArgs(self, args):
+
+        glob_index = []
+        globbed_result = []
+        parsedArg = []
+
+        for n, arg in enumerate(args):
+            argOut = deque()
+
+            # arg: []
+            for subArg in arg:
+
+                if (
+                    isinstance(subArg, DoubleQuote)
+                    or isinstance(subArg, Substitution)
+                    or isinstance(subArg, SingleQuote)
+                ):
+                    executedProcess = subArg.accept(self)
+
+                    if executedProcess["exit_code"]:
+                        raise Exception(executedProcess["stderr"])
+                    else:
+                        argOut.append("".join(executedProcess["stdout"]))
+
+                # ['a','*.py']
+                elif isinstance(subArg, str) and "*" in subArg:
+                    glob_index.append(n)
+                    argOut.append(subArg)
+
+                else:
+                    argOut.append(subArg)
+
+            parsedArg.append("".join(argOut))
+            if n in glob_index:
+                globbed_result.append(glob(parsedArg[-1]))
+
+        return (parsedArg, glob_index, globbed_result)
+
+    def _getAppName(self, appName):
+
+        if isinstance(appName, Substitution):
+            subExecuted = appName.accept(self)
+            if subExecuted["exit_code"] != 0:
+                raise Exception(f"Cannot substitute {appName} as app name")
+
+            appName = "".join(subExecuted["stdout"]).strip(" \n")
+
+        return appName
+
+    def _getRedirects(self, redirects):
+
+        stdin, redirectOut = None, None
+
+        for r in redirects:
+            if isinstance(r, RedirectIn) and not stdin:
+                stdin = r.accept(self)["stdout"]
+            elif isinstance(r, RedirectOut) and not redirectOut:
+                redirectOut = r
+            else:
+                # not related to unsafe app, the error of system
+                raise Exception("invalid redirections")
+
+        return (stdin, redirectOut)
+
+    def _getGlobbedArg(self, parsedArg, glob_index, globbed_result):
+
+        args_lst = []
+        glob_pairs = product(*globbed_result)
+
+        for pair in glob_pairs:
+            argsForThisPair = []
+            count = 0
+
+            for arg_index in range(len(parsedArg)):
+
+                if arg_index in glob_index:
+                    argsForThisPair.append(pair[count])
+                    count += 1
+                else:
+                    argsForThisPair.append(parsedArg[arg_index])
+
+            args_lst.append(argsForThisPair)
+
+        return args_lst
+
+
+if __name__ == "__main__":
+    i = Call(
+        redirects=[],
+        appName=Substitution("echo echo"),
+        args=[["hello world"]],
+    )
+    out = ASTVisitor().visitCall(i)
+    assert "".join(out["stdout"]).strip("\n") == "hello world"

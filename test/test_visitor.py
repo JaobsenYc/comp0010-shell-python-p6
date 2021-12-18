@@ -17,7 +17,6 @@ import os
 
 class TestASTVisitor(unittest.TestCase):
     def setUp(self) -> None:
-        print(os.listdir(os.getcwd()))
         os.chdir("./test")
         self.visitor = ASTVisitor()
         with open("file1.txt", "w") as f1:
