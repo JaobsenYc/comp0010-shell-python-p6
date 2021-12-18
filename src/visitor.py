@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod, abstractproperty
 from abstract_syntax_tree import (
     DoubleQuote,
     RedirectIn,
@@ -14,37 +14,37 @@ from itertools import product
 
 
 class Visitor(ABC):
-    @abstractmethod
+    @abstractproperty
     def visitSingleQuote(self, singleQuote):
-        pass
+        """visit singlequote"""
 
-    @abstractmethod
+    @abstractproperty
     def visitDoubleQuote(self, doubleQuote):
-        pass
+        """visit doublequote"""
 
-    @abstractmethod
+    @abstractproperty
     def visitSub(self, sub):
-        pass
+        """visit substitution"""
 
-    @abstractmethod
+    @abstractproperty
     def visitRedirectIn(self, redirectIn):
-        pass
+        """visit redirectin"""
 
-    @abstractmethod
+    @abstractproperty
     def visitRedirectOut(self, redirectOut):
-        pass
+        """visit redirectout"""
 
-    @abstractmethod
+    @abstractproperty
     def visitCall(self, call, input=None):
-        pass
+        """visit call"""
 
-    @abstractmethod
+    @abstractproperty
     def visitSeq(self, seq):
-        pass
+        """visit sequence"""
 
-    @abstractmethod
+    @abstractproperty
     def visitPipe(self, pipe):
-        pass
+        """visit pipe"""
 
 
 class ASTVisitor(Visitor):
@@ -295,7 +295,3 @@ class ASTVisitor(Visitor):
             "stderr": outLeft["stderr"],
             "exit_code": outLeft["exit_code"] or outRight["exit_code"],
         }
-
-
-if __name__ == "__main__":
-    print(ASTVisitor().visitRedirectIn(RedirectIn("notExist")))

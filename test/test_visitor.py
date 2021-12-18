@@ -139,13 +139,14 @@ class TestASTVisitor(unittest.TestCase):
     def test_visit_call_appname_substitution_error(self):
         i = Call(
             redirects=[],
-            appName=Substitution("cat notExist.txt"),
+            appName=Substitution("_cat notExist.txt"),
             args=[["hello world"]],
         )
         with self.assertRaises(Exception) as context:
             self.visitor.visitCall(i)
         self.assertEqual(
-            "Cat: notExist.txt: No such file or directory", str(context.exception)
+            "Cannot substitute Subeval(_cat notExist.txt) as app name",
+            str(context.exception),
         )
 
     def test_visit_call_redirectin(self):
@@ -268,10 +269,12 @@ class TestASTVisitor(unittest.TestCase):
         i = Call(
             redirects=[],
             appName="cat",
-            args=[["*1.txt"], ["*2.txt"]],
+            args=[["file1.txt"], ["*1.txt"], ["*2.txt"]],
         )
         out = self.visitor.visitCall(i)
-        self.assertEqual("".join(out["stdout"]), "abc\nadc\nabc\ndeffile2\ncontent")
+        self.assertEqual(
+            "".join(out["stdout"]), "abc\nadc\nabc\ndefabc\nadc\nabc\ndeffile2\ncontent"
+        )
         self.assertEqual("".join(out["stderr"]), "")
         self.assertEqual(out["exit_code"], 0)
 
