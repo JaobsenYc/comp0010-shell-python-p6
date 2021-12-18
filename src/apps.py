@@ -240,7 +240,8 @@ class Grep:
                             else:
                                 stdout.append(line)
                 except FileNotFoundError:
-                    std_dict["stderr"] = f"Grep: {file}: No such file or directory"
+                    errMessage = f"Grep: {file}: No such file or directory"
+                    std_dict["stderr"] = errMessage
                     std_dict["exit_code"] = "1"
                     return std_dict
             std_dict["stdout"] = stdout
@@ -293,8 +294,10 @@ class Cut:
                 std_dict["stderr"] = "No such file or directory"
                 std_dict["exit_code"] = "1"
                 return std_dict
-                # If the cut command uses the -b option, then when executing this command,
-                # cut will sort all the positions after -b from small to large, and then extract them.
+                # If the cut command uses the -b option,
+                # then cut will sort all the positions
+                # after -b from small to large, and then
+                # extract them.
 
         for line in lines:
             start_list = []
@@ -362,7 +365,8 @@ class Uniq:
                     stdout = self.file_helper(file, ignore)
                     std_dict["stdout"] = stdout
                 except FileNotFoundError:
-                    std_dict["stderr"] = f"Grep: {file}: No such file or directory"
+                    errMessage = f"Grep: {file}: No such file or directory"
+                    std_dict["stderr"] = errMessage
                     std_dict["exit_code"] = "1"
                 return std_dict
             else:
@@ -431,7 +435,8 @@ class Sort:
                     stdout = self.file_helper(file, reverse)
                     std_dict["stdout"] = stdout
                 except FileNotFoundError:
-                    std_dict["stderr"] = f"Grep: {file}: No such file or directory"
+                    errMessage = f"Grep: {file}: No such file or directory"
+                    std_dict["stderr"] = errMessage
                     std_dict["exit_code"] = "1"
                 return std_dict
             else:
@@ -550,13 +555,12 @@ class LocalApp:
         # windows has to check file extension
         if sys.platform == "win32":
             if os.curdir not in path:
-                # add current directory to path so applications are found in current dir
+                # add current directory to path so
+                # applications are found in current dir
                 path.append(os.curdir)
 
             pathExtensions = os.getenv("PATHEXT").split(os.pathsep)
-            pathExtensionList = [
-                extension for extension in pathExtensions if extension is not None
-            ]
+            pathExtensionList = [e for e in pathExtensions if e is not None]
 
             for extension in pathExtensionList:
                 if app.lower().endswith(extension.lower()):
@@ -604,7 +608,9 @@ if __name__ == "__main__":
     # raise ValueError('A very specific bad thing happened.')
     print("Pwd", Pwd().exec())
     # print("Ls", Ls().exec(args=[]))
-    # print("Ls", Ls().exec(args=["F:\\OneDrive\\OneDrive - University College London\\"]))
+    # print("Ls", Ls().exec(
+    # args=
+    # ["F:\\OneDrive\\OneDrive - University College London\\"]))
     # print("Cat", Cat().exec(args=["dir1/file1.txt"]))
     print("Grep", Grep().exec(args=["A..", "file.txt"]))
     print("Head", Head().exec(args=["-n", 3, "file.txt"]))
@@ -625,7 +631,8 @@ if __name__ == "__main__":
     #     if args_num != 2:
     #         raise ValueError("wrong number of command line arguments")
     #     if sys.argv[1] != "-c":
-    #         raise ValueError(f"unexpected command line argument {sys.argv[1]}")
+    #         raise ValueError(
+    # f"unexpected command line argument {sys.argv[1]}")
     #     out = deque()
     #     print(out)
     #     # eval(sys.argv[2], out)
