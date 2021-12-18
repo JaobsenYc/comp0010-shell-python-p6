@@ -55,6 +55,8 @@ class ASTVisitor(Visitor):
     """
 
     def visitSingleQuote(self, singleQuote):
+        assert isinstance(singleQuote, SingleQuote)
+
         quotedPart = singleQuote.quotedPart
         res_deque = deque()
         res_deque.append(quotedPart)
@@ -67,6 +69,7 @@ class ASTVisitor(Visitor):
     """
 
     def visitDoubleQuote(self, doubleQuote):
+
         containSubstitution, quotedPart = (
             doubleQuote.containSubstitution,
             doubleQuote.quotedPart,
