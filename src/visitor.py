@@ -152,7 +152,8 @@ class ASTVisitor(Visitor):
 
     """
     :param call: this is a AST().Call object
-    :keyword input: this is optional, default as None; io redirection and pipe content
+    :keyword input: this is optional, default as None; 
+                    io redirection and pipe content
     :returns: this is a dictionary of srdout, stderr and exit_code
     """
 
