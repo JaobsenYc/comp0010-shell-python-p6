@@ -2,4 +2,4 @@
 
 TOOLS_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-cd "$TOOLS_ROOT/../" && (pylint -f json -d "R0903" src | pylint-json2html -o index.html || true) && python -m http.server
+cd "$TOOLS_ROOT/../" && (pylint -f json -d "R0903,W0613" src | pylint-json2html -o index.html || true) && python -m http.server
