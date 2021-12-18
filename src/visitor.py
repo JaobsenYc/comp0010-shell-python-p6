@@ -1,14 +1,14 @@
 from abc import ABC, abstractmethod, abstractproperty
-from abstract_syntax_tree import (
+from src.abstract_syntax_tree import (
     DoubleQuote,
     RedirectIn,
     RedirectOut,
     SingleQuote,
     Substitution,
 )
-from parsercombinator import command
+from src.parsercombinator import command
 from glob import glob
-from appsFactory import AppsFactory
+from src.appsFactory import AppsFactory
 from collections import deque
 from itertools import product
 

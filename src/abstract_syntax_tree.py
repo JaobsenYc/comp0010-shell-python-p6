@@ -90,7 +90,7 @@ class Call(AST):
         self.args = args
         assert isinstance(args, Iterable)
         assert all(isinstance(arg, Iterable) for arg in args)
-        assert len(redirects) < 2
+        assert len(redirects) <= 2
 
     def accept(self, visitor, input=None):
         return visitor.visitCall(self, input=input)
