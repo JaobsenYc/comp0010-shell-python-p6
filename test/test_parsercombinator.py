@@ -1,21 +1,22 @@
 import unittest
-
-from parsercombinator import pipeOp, semiOp
 from collections import deque
 
+import parsercombinator as pc
+from hypothesis import given
+from hypothesis import strategies as st
+from hypothesis_regex import regex
 
-class TestShell(unittest.TestCase):
-    def test_shell(self):
-        out = deque()
-        eval("echo foo", out)
-        self.assertEqual(out.popleft(), "foo\n")
-        self.assertEqual(len(out), 0)
 
-    def test_unsafe(self):
-        pass
+class TestParserCombinator(unittest.TestCase):
+    def test_constants(self):
+        assert pc.pipeOp.parse("|") == "|"
+        assert pc.semiOp.parse(";") == ";"
+        assert pc.lessThan.parse("<") == "<"
+        assert pc.greaterThan.parse(">") == ">"
 
-    def test_localapp(self):
-        pass
+    @given(regex(" *"))
+    def test_whitespace(self, spaces):
+        assert pc.greaterThan.parse(spaces) == spaces
 
 
 if __name__ == "__main__":
