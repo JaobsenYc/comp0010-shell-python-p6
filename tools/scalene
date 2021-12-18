@@ -2,4 +2,4 @@
 
 TOOLS_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-cd "$TOOLS_ROOT/../" && (scalene --html --profile-only "src" --outfile index.html test/test_visitor.py || true) && python -m http.server
+cd "$TOOLS_ROOT/../" && (scalene --html --profile-only "src" --outfile index.html test/test_parsercombinator.py || true) && python -m http.server
