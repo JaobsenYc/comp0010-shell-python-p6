@@ -28,9 +28,6 @@ def singleton(cls):
     return inner
 
 
-# class ShellException(Exception):
-
-
 @singleton
 class AppDecorator:
     def decorateSafe(self, cls):
@@ -48,17 +45,6 @@ class AppDecorator:
         return cls
 
     def decorateUnsafe(self, cls):
-        # def newExec(args, stdin=None):
-
-        #     try:
-        #         executedProcess = cls.exec(args, stdin=stdin)
-        #         if executedProcess["exit_code"]:
-        #             raise Exception(args, "".join(executedProcess["stderr"]))
-        #         return executedProcess
-        #     except Exception as e:
-        #         print("{}: {}".format(e.args[0], e.args[1]))
-
-        # cls.newExec = newExec
         return cls
 
 

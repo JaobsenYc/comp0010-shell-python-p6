@@ -5,8 +5,6 @@ from parsercombinator import command
 from visitor import ASTVisitor
 import traceback
 
-# def eval()
-
 if __name__ == "__main__":
     visitor = ASTVisitor()
     out = deque()
@@ -17,7 +15,7 @@ if __name__ == "__main__":
         if sys.argv[1] != "-c":
             raise ValueError(f"unexpected command line argument {sys.argv[1]}")
         cmd = command.parse(sys.argv[2])
-        # print(seq)
+
         try:
             out = cmd.accept(visitor)
             if out["exit_code"]:
@@ -28,21 +26,12 @@ if __name__ == "__main__":
         except Exception:
             print(traceback.format_exc(), file=sys.stderr)
 
-        # while len(out) > 0:
-        #     line = out.popleft()
-        #     print(line, end="")
-        # print("".join(out["stdout"]), end="")
     else:
         while True:
             print(os.getcwd() + "> ", end="")
             cmdline = input()
-            # print(cmdline)
             cmd = command.parse(cmdline)
-            # out = cmd.accept(visitor)
 
-            # while len(out) > 0:
-            #     line = out.popleft()
-            #     print(line, end="")
             try:
                 out = cmd.accept(visitor)
                 if out["exit_code"]:
