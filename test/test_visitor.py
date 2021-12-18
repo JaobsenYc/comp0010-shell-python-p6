@@ -245,7 +245,7 @@ class TestASTVisitor(unittest.TestCase):
             args=[["aa"], [SingleQuote("bb")]],
         )
         out = self.visitor.visitCall(i)
-        self.assertEqual("".join(out["stdout"]), "aa bb")
+        self.assertEqual("".join(out["stdout"]).strip("\n"), "aa bb")
         self.assertEqual("".join(out["stderr"]), "")
         self.assertEqual(out["exit_code"], 0)
 
@@ -256,7 +256,7 @@ class TestASTVisitor(unittest.TestCase):
             args=[[Substitution("echo arg_sub_content")]],
         )
         out = self.visitor.visitCall(i)
-        self.assertEqual("".join(out["stdout"]), "echo arg_sub_content")
+        self.assertEqual("".join(out["stdout"]).strip("\n"), "arg_sub_content")
         self.assertEqual("".join(out["stderr"]), "")
         self.assertEqual(out["exit_code"], 0)
 
@@ -278,7 +278,7 @@ class TestASTVisitor(unittest.TestCase):
         i = Call(
             redirects=[],
             appName="cat",
-            args=[["?ile3.txt"]],
+            args=[["*3.txt"]],
         )
         out = self.visitor.visitCall(i)
         self.assertEqual("".join(out["stdout"]), "file3\ncontent")
@@ -290,13 +290,10 @@ class TestASTVisitor(unittest.TestCase):
         i = Call(
             redirects=[],
             appName="cat",
-            args=[["*.txt"], ["file?.txt"]],
+            args=[["*1.txt"], ["*2.txt"]],
         )
         out = self.visitor.visitCall(i)
-        output = subprocess.run(
-            ["cat", "*.txt", "file?.txt"], capture_output=True, text=True
-        ).stdout
-        self.assertEqual("".join(out["stdout"]), output)
+        self.assertEqual("".join(out["stdout"]), "abc\nadc\nabc\ndeffile2\ncontent")
         self.assertEqual("".join(out["stderr"]), "")
         self.assertEqual(out["exit_code"], 0)
 

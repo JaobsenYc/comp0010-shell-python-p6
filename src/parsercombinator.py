@@ -1,18 +1,10 @@
 from parsy import regex, string, generate, seq
-from glob import glob
-from apps import *
 import abstract_syntax_tree
 
-# from visitor import ASTVisitor
 
 pipeOp = string("|")
 semiOp = string(";")
 nonKeyWord = regex("[^`\"'\\s;|\n]+").desc("not keyword string")
-
-# @generate
-# def backSlash():
-#     content = yield regex()
-#     return
 
 
 @generate
@@ -27,7 +19,6 @@ def backQuoted():
     return abstract_syntax_tree.Substitution(content[1:-1])
 
 
-# double quote doesn't disable back quote
 @generate
 def doubleQuoted():
     yield string('"')
@@ -60,8 +51,9 @@ def unquoted():
     return s
 
 
-argument = (quoted | unquoted).at_least(1)  # .at_least(1)
-# redirection = seq(lessThan | greaterThan, whitespace >> argument)
+argument = (quoted | unquoted).at_least(1)
+
+
 @generate
 def redirection():
     sign = yield lessThan | greaterThan
@@ -73,11 +65,8 @@ def redirection():
 
 
 atom = redirection | argument
-# call = seq(
-#     whitespace >> (redirection << whitespace).many(),
-#     argument,
-#     (whitespace >> atom).many() << whitespace,
-# )
+
+
 @generate
 def call():
     redirections = yield whitespace >> (redirection << whitespace).many()
@@ -90,8 +79,6 @@ def call():
             or type(a) is abstract_syntax_tree.RedirectIn
         ):
             redirections.append(a)
-        # elif isinstance(a, abstract_syntax_tree.DoubleQuote):
-        #     args.append(a)
         else:
             args.append(a)
     return abstract_syntax_tree.Call(redirections, callName, args)
@@ -99,7 +86,8 @@ def call():
 
 sequ = seq(semiOp, call)
 pipe = seq(pipeOp, call)
-# command = seq(call, (pipe | sequ).many())
+
+
 @generate
 def command():
     basis = yield call
@@ -110,65 +98,3 @@ def command():
         else:
             basis = abstract_syntax_tree.Pipe(basis, addition[1])
     return basis
-
-
-if __name__ == "__main__":
-    # print(command.parse("< *.py call a b \"a\" > out| hello `echo arg` *.py *s.py ; cat a "))
-    print(command.parse("`echo echo` hi"))
-
-# space = regex("\s+")
-# optional_space = space.optional()
-# semi = string(";")
-# word = regex("[^\"'\\s;]+").desc("executable command or argument")
-# openParen = string("(")
-# closeParen = string(")")
-
-
-# @generate
-# def string_():
-#     s = yield regex("\"[^\"]+\"|'[^']+'").desc("quoted characters")
-#     return s[1:-1]
-
-
-# @generate
-# def globbed_word():
-#     w = yield regex("[^\"'\\s;]+").desc("executable command or argument")
-#     return glob(w) or w
-
-
-# @generate
-# def arguments():
-#     flat_args = []
-#     args = yield (space >> (string_ | globbed_word)).many()
-#     for item in args:
-#         if isinstance(item, list):
-#             flat_args.extend(item)
-#         else:
-#             flat_args.append(item)
-#     return flat_args
-
-
-# # arguments = (space >> (string_ | word)).many()
-
-# expression = seq(word, arguments)
-
-
-# @generate
-# def complex_expression():
-#     e = yield expression
-#     root = Expression(e)
-#     while True:
-#         yield optional_space
-#         s = yield semi.optional()
-#         if s:
-#             yield optional_space
-#             next_expression = yield expression
-#             operator = SemiColon(root, Expression(next_expression))
-#             root = operator
-#         else:
-#             break
-#     return root
-
-
-# if __name__ == "__main__":
-#     print(complex_expression.parse("echo hi; echo danny"))

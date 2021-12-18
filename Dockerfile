@@ -11,6 +11,7 @@ RUN apt-get update \
 COPY . /comp0010
 
 RUN chmod u+x /comp0010/sh
+RUN chmod -x $(find /comp0010/test/ -name '*.py')
 RUN chmod u+x /comp0010/tools/test
 RUN chmod u+x /comp0010/tools/coverage
 RUN chmod u+x /comp0010/tools/analysis
