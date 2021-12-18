@@ -1,8 +1,8 @@
 import sys
 import os
 from collections import deque
-from parsercombinator import command
-from visitor import ASTVisitor
+from src.parsercombinator import command
+from src.visitor import ASTVisitor
 import traceback
 
 if __name__ == "__main__":

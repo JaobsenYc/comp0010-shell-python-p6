@@ -58,7 +58,6 @@ class Substitution(AST):
 class RedirectIn(AST):
     def __init__(self, arg) -> None:
         self.arg = arg
-        assert len(arg) >= 1
 
     def accept(self, visitor):
         return visitor.visitRedirectIn(self)
@@ -91,7 +90,7 @@ class Call(AST):
         self.args = args
         assert isinstance(args, Iterable)
         assert all(isinstance(arg, Iterable) for arg in args)
-        assert len(redirects) < 2
+        assert len(redirects) <= 2
 
     def accept(self, visitor, input=None):
         return visitor.visitCall(self, input=input)

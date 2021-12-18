@@ -1,7 +1,7 @@
 import unittest
 
-import parsercombinator as pc
-from abstract_syntax_tree import (
+from src import parsercombinator as pc
+from src.abstract_syntax_tree import (
     DoubleQuote,
     Substitution,
     SingleQuote,
