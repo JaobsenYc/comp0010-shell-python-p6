@@ -73,7 +73,6 @@ class RedirectIn(AST):
 class RedirectOut(AST):
     def __init__(self, arg) -> None:
         self.arg = arg
-        assert len(arg) == 1
 
     def accept(self, visitor, stdin=None):
         return visitor.visitRedirectOut(self, stdin)
