@@ -121,13 +121,13 @@ class ASTVisitor(Visitor):
 
         fs = glob(redirectIn.arg)
 
+        if len(fs) < 1:
+            raise FileNotFoundError
+
         for i in fs:
 
-            try:
-                with open(i) as f:
-                    out.extend(f.readlines())
-            except FileNotFoundError as fnfe:
-                raise fnfe
+            with open(i) as f:
+                out.extend(f.readlines())
 
         return {"stdout": out, "stderr": deque(), "exit_code": 0}
 
@@ -228,11 +228,7 @@ class ASTVisitor(Visitor):
 
         if len(glob_index) > 0:
 
-            # in case have multiple glob
-            if len(glob_index) > 1:
-                glob_pairs = product(globbed_result)
-            else:
-                glob_pairs = globbed_result[0]
+            glob_pairs = product(*globbed_result)
 
             for pair in glob_pairs:
                 argsForThisPair = []
@@ -241,14 +237,10 @@ class ASTVisitor(Visitor):
                 for arg_index in range(len(parsedArg)):
 
                     if arg_index in glob_index:
-
-                        if len(glob_index) == 1:
-                            argsForThisPair.append(pair)
-                        else:
-                            argsForThisPair.append(pair[count])
+                        argsForThisPair.append(pair[count])
+                        count += 1
                     else:
                         argsForThisPair.append(parsedArg[arg_index])
-                    count += 1
 
                 executed = app.exec(argsForThisPair, stdin=stdin)
                 out.extend(executed["stdout"])
@@ -303,3 +295,7 @@ class ASTVisitor(Visitor):
             "stderr": outLeft["stderr"],
             "exit_code": outLeft["exit_code"] or outRight["exit_code"],
         }
+
+
+if __name__ == "__main__":
+    print(ASTVisitor().visitRedirectIn(RedirectIn("notExist")))

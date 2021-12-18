@@ -1,3 +1,4 @@
+from collections import deque
 import unittest
 
 from visitor import ASTVisitor
@@ -12,54 +13,45 @@ from abstract_syntax_tree import (
     Pipe,
 )
 import os
-import subprocess
 
 
 class TestASTVisitor(unittest.TestCase):
     def setUp(self) -> None:
+        print(os.listdir(os.getcwd()))
+        os.chdir("./test")
         self.visitor = ASTVisitor()
         with open("file1.txt", "w") as f1:
             f1.write("abc\nadc\nabc\ndef")
         with open("file2.txt", "w") as f2:
             f2.write("file2\ncontent")
 
-    # for single quote
     def test_visit_singlequote_empty(self):
-        i = SingleQuote("''")
+        i = SingleQuote("")
         out = self.visitor.visitSingleQuote(i)
         self.assertEqual("".join(out["stdout"]), "")
         self.assertEqual("".join(out["stderr"]), "")
         self.assertEqual(out["exit_code"], 0)
 
     def test_visit_singlequote_space(self):
-        i = SingleQuote("'  '")
+        i = SingleQuote("  ")
         out = self.visitor.visitSingleQuote(i)
         self.assertEqual("".join(out["stdout"]), "  ")
         self.assertEqual("".join(out["stderr"]), "")
         self.assertEqual(out["exit_code"], 0)
 
     def test_visit_singlequote_disable_doublequote(self):
-        i = SingleQuote("'\"\"'")
+        i = SingleQuote('""')
         out = self.visitor.visitSingleQuote(i)
         self.assertEqual("".join(out["stdout"]), '""')
         self.assertEqual("".join(out["stderr"]), "")
         self.assertEqual(out["exit_code"], 0)
 
     def test_visit_singlequote_backquote(self):
-        i = SingleQuote("'`echo hello`'")
+        i = SingleQuote("`echo hello`")
         out = self.visitor.visitSingleQuote(i)
         self.assertEqual("".join(out["stdout"]), "`echo hello`")
         self.assertEqual("".join(out["stderr"]), "")
         self.assertEqual(out["exit_code"], 0)
-
-    def test_visit_singlequote_substitution_error(self):
-        i = SingleQuote("'`echo hello`'")
-        out = self.visitor.visitSingleQuote(i)
-        self.assertEqual("".join(out["stdout"]), "")
-        self.assertEqual(
-            "".join(out["stderr"]), "wrong number of command line arguments"
-        )
-        self.assertEqual(out["exit_code"], 1)
 
     def test_visit_doublequote_no_substitution(self):
         i = DoubleQuote(["a", "b"], False)
@@ -75,16 +67,14 @@ class TestASTVisitor(unittest.TestCase):
         self.assertEqual("".join(out["stderr"]), "")
         self.assertEqual(out["exit_code"], 0)
 
-    # singlequote in doubleqoute?
-
-    def test_visit_doublequote_error(self):
-        i = DoubleQuote(["a", Substitution("ls a b"), "b"], True)
+    def test_visit_doublequote_error_unsafe(self):
+        i = DoubleQuote(["a", Substitution("_ls a b"), "b"], True)
         out = self.visitor.visitDoubleQuote(i)
-        self.assertEqual("".join(out["stdout"]), "")
+        self.assertEqual("".join(out["stdout"]), "ab")
         self.assertEqual(
             "".join(out["stderr"]), "wrong number of command line arguments"
         )
-        self.assertEqual(out["exit_code"], 1)
+        self.assertNotEquals(out["exit_code"], 0)
 
     def test_visit_substitution(self):
         i = Substitution("echo foo")
@@ -94,11 +84,13 @@ class TestASTVisitor(unittest.TestCase):
         self.assertEqual(out["exit_code"], 0)
 
     def test_visit_substitution_error(self):
-        i = Substitution("ls a b")
+        i = Substitution("_ls a b")
         out = self.visitor.visitSub(i)
         self.assertEqual("".join(out["stdout"]), "")
-        self.assertEqual("".join(out["stderr"]), "")
-        self.assertEqual(out["exit_code"], 0)
+        self.assertEqual(
+            "".join(out["stderr"]), "wrong number of command line arguments"
+        )
+        self.assertNotEquals(out["exit_code"], 0)
 
     def test_visit_redirectin(self):
         i = RedirectIn("file1.txt")
@@ -108,41 +100,29 @@ class TestASTVisitor(unittest.TestCase):
         self.assertEqual(out["exit_code"], 0)
 
     def test_visit_redirectin_glob(self):
-        i = RedirectIn("*.txt")
+        i = RedirectIn("*2.txt")
         out = self.visitor.visitRedirectIn(i)
-        self.assertEqual(
-            "".join(out["stdout"]), ["abc\nadc\nabc\ndef", "file2\ncontent"]
-        )
+        self.assertEqual("".join(out["stdout"]), "file2\ncontent")
         self.assertEqual("".join(out["stderr"]), "")
         self.assertEqual(out["exit_code"], 0)
 
     def test_visit_redirectin_error(self):
-        self.assertRaises(
-            FileNotFoundError,
-            self.visitor.visitRedirectIn,
-            RedirectIn("file3.txt"),
-        )
+        with self.assertRaises(OSError):
+            self.visitor.visitRedirectIn(RedirectIn("notExist.txt"))
 
     def test_visit_redirectout(self):
-        i = RedirectOut("testRedirectout.txt", stdin="aaa\nbbb\nccc")
-        self.visitor.visitRedirectOut(i)
+        i = RedirectOut("testRedirectout.txt")
+        stdin = deque()
+        stdin.append("aaa\nbbb\nccc")
+        self.visitor.visitRedirectOut(i, stdin=stdin)
         with open("testRedirectout.txt") as f:
             lines = f.readlines()
-        self.assertEqual("".join(lines), "aaa\nbbb\nccc")
+        self.assertEqual("".join(lines).strip("\n"), "aaa\nbbb\nccc")
         os.remove("testRedirectout.txt")
-
-    # what's the best result?
-    def test_visit_redirectout_no_stdin(self):
-        i = RedirectOut("testRedirectoutEmpty.txt")
-        self.visitor.visitRedirectOut(i)
-        with open("testRedirectoutEmpty.txt") as f:
-            lines = f.readlines()
-        self.assertEqual("".join(lines), "")
-        os.remove("testRedirectoutEmpty.txt")
 
     def test_visit_redirectout_error(self):
         with self.assertRaises(Exception) as context:
-            self.visitor.visitRedirectIn(RedirectIn("*.txt"))
+            self.visitor.visitRedirectOut(RedirectOut("*.txt"))
         self.assertEqual("invalid redirection out", str(context.exception))
 
     def test_visit_call_appname_substitution(self):
@@ -165,17 +145,17 @@ class TestASTVisitor(unittest.TestCase):
         with self.assertRaises(Exception) as context:
             self.visitor.visitCall(i)
         self.assertEqual(
-            "Cannot substitute cat notExist.txt as app name", str(context.exception)
+            "Cat: notExist.txt: No such file or directory", str(context.exception)
         )
 
     def test_visit_call_redirectin(self):
         i = Call(
             redirects=[RedirectIn("file1.txt")],
-            appName="echo",
+            appName="cat",
             args=[],
         )
         out = self.visitor.visitCall(i)
-        self.assertEqual("".join(out["stdout"]), "abc\nadc\nabc\ndef")
+        self.assertEqual("".join(out["stdout"]).strip("\n"), "abc\nadc\nabc\ndef")
         self.assertEqual("".join(out["stderr"]), "")
         self.assertEqual(out["exit_code"], 0)
 
@@ -186,8 +166,8 @@ class TestASTVisitor(unittest.TestCase):
             args=[["call\nredirectout"]],
         )
         out = self.visitor.visitCall(i)
-        self.assertEqual("".join(out["stdout"]), "")
-        self.assertEqual(out["stderr"], "")
+        self.assertEqual("".join(out["stdout"]).strip("\n"), "")
+        self.assertEqual("".join(out["stderr"]), "")
         os.remove("testRedirectoutReturn.txt")
 
     def test_visit_call_redirection_invalid(self):
@@ -203,11 +183,11 @@ class TestASTVisitor(unittest.TestCase):
     def test_visit_call_no_redirectin_but_input(self):
         i = Call(
             redirects=[],
-            appName="echo",
+            appName="cat",
             args=[],
         )
         out = self.visitor.visitCall(i, input="input\ncontent")
-        self.assertEqual("".join(out["stdout"]), "input\ncontent")
+        self.assertEqual("".join(out["stdout"]).strip("\n"), "input\ncontent")
         self.assertEqual("".join(out["stderr"]), "")
         self.assertEqual(out["exit_code"], 0)
 
@@ -216,11 +196,11 @@ class TestASTVisitor(unittest.TestCase):
             f.write("redirectin\ncontent")
         i = Call(
             redirects=[RedirectIn("testRedirectinOverwriteInput.txt")],
-            appName="echo",
+            appName="cat",
             args=[],
         )
         out = self.visitor.visitCall(i, input="input\ncontent")
-        self.assertEqual("".join(out["stdout"]), "redirectin\ncontent")
+        self.assertEqual("".join(out["stdout"]).strip("\n"), "redirectin\ncontent")
         self.assertEqual("".join(out["stderr"]), "")
         self.assertEqual(out["exit_code"], 0)
         os.remove("testRedirectinOverwriteInput.txt")
@@ -261,13 +241,13 @@ class TestASTVisitor(unittest.TestCase):
     def test_visit_call_args_exec_error(self):
         i = Call(
             redirects=[],
-            appName="echo",
+            appName="_echo",
             args=[[Substitution("cat notExist.txt")]],
         )
         with self.assertRaises(Exception) as context:
             self.visitor.visitCall(i)
         self.assertEqual(
-            "Cat: notExist.txt: No such file or directory" in str(context.exception)
+            "Cat: notExist.txt: No such file or directory", str(context.exception)
         )
 
     def test_visit_call_args_glob(self):
@@ -309,9 +289,9 @@ class TestASTVisitor(unittest.TestCase):
             ),
         )
         out = self.visitor.visitSeq(i)
-        self.assertEqual("".join(out["stdout"]), "right\noutput")
+        self.assertEqual("".join(out["stdout"]).strip("\n"), "right\noutput")
         self.assertEqual("".join(out["stderr"]), "Ls: notExist: No such directory")
-        self.assertEqual(out["exit_code"], 1)
+        self.assertNotEquals(out["exit_code"], 1)
 
     def test_visit_seq_right_error_unsafe(self):
         i = Seq(
@@ -327,9 +307,9 @@ class TestASTVisitor(unittest.TestCase):
             ),
         )
         out = self.visitor.visitSeq(i)
-        self.assertEqual("".join(out["stdout"]), "left\noutput")
+        self.assertEqual("".join(out["stdout"]).strip("\n"), "left\noutput")
         self.assertEqual("".join(out["stderr"]), "Ls: notExist: No such directory")
-        self.assertEqual(out["exit_code"], 1)
+        self.assertNotEquals(out["exit_code"], 1)
 
     def test_visit_seq_left_error_right_error_unsafe(self):
         i = Seq(
@@ -350,7 +330,7 @@ class TestASTVisitor(unittest.TestCase):
             "".join(out["stderr"]),
             "Ls: notExist1: No such directoryLs: notExist2: No such directory",
         )
-        self.assertEqual(out["exit_code"], 1)
+        self.assertNotEquals(out["exit_code"], 1)
 
     def test_visit_seq_no_error(self):
         i = Seq(
@@ -366,7 +346,9 @@ class TestASTVisitor(unittest.TestCase):
             ),
         )
         out = self.visitor.visitSeq(i)
-        self.assertEqual("".join(out["stdout"]), "left\noutputright\noutput")
+        self.assertEqual(
+            "".join(out["stdout"]).strip("\n"), "left\noutput\nright\noutput"
+        )
         self.assertEqual("".join(out["stderr"]), "")
         self.assertEqual(out["exit_code"], 0)
 
@@ -375,16 +357,16 @@ class TestASTVisitor(unittest.TestCase):
             Call(
                 redirects=[],
                 appName="echo",
-                args=[["left\noutput"]],
+                args=[["left output"]],
             ),
             Call(
                 redirects=[],
-                appName="echo",
-                args=[],
+                appName="cut",
+                args=[["-b"], ["1,2"]],
             ),
         )
         out = self.visitor.visitPipe(i)
-        self.assertEqual("".join(out["stdout"]), "left\noutput")
+        self.assertEqual("".join(out["stdout"]).strip("\n"), "le")
         self.assertEqual("".join(out["stderr"]), "")
         self.assertEqual(out["exit_code"], 0)
 
@@ -397,18 +379,21 @@ class TestASTVisitor(unittest.TestCase):
             ),
             Call(
                 redirects=[],
-                appName="_ls",
+                appName="_cd",
                 args=[],
             ),
         )
         out = self.visitor.visitPipe(i)
-        self.assertEqual("".join(out["stdout"]), "")
-        self.assertEqual("".join(out["stderr"]), "notExist: No such directory")
-        self.assertEqual(out["exit_code"], 1)
+        self.assertEqual("".join(out["stdout"]).strip("\n"), "")
+        self.assertEqual(
+            "".join(out["stderr"]), "wrong number of command line arguments"
+        )
+        self.assertNotEquals(out["exit_code"], 1)
 
     def tearDown(self) -> None:
         os.remove("file1.txt")
         os.remove("file2.txt")
+        os.chdir("./..")
 
 
 if __name__ == "__main__":
