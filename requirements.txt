@@ -8,3 +8,5 @@ scalene
 pylint
 pylint-json2html
 mock
+pytest
+mutmut
