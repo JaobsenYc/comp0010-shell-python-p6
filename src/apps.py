@@ -520,18 +520,19 @@ class Find:
                 if not os.path.isdir(d1):
                     if fnmatch.fnmatch(d, pattern):
                         res.append("/".join([current, d]))
+
                 else:
                     stack.append("/".join([current, d]))
 
         return res
 
-
-class NotSupported:
-    def __init__(self, app_token):
-        self.app_token = app_token
-
-    def exec(self, out, args):
-        raise ValueError(f"unsupported application {self.app_token}")
+#
+# class NotSupported:
+#     def __init__(self, app_token):
+#         self.app_token = app_token
+#
+#     def exec(self, out, args):
+#         raise ValueError(f"unsupported application {self.app_token}")
 
 
 class LocalApp:
@@ -545,9 +546,9 @@ class LocalApp:
         if os.path.dirname(app):
             # path exists,is accessible, and not a directory
             if (
-                os.path.exists(app)
-                and os.access(app, existsAndExecutable)
-                and not os.path.isdir(app)
+                    os.path.exists(app)
+                    and os.access(app, existsAndExecutable)
+                    and not os.path.isdir(app)
             ):
                 return self.app
             return None
@@ -586,9 +587,9 @@ class LocalApp:
             for executable in possibleExecutable:
                 executablePath = os.path.join(os.path.normcase(p), executable)
                 if (
-                    os.path.exists(executablePath)
-                    and os.access(executablePath, existsAndExecutable)
-                    and not os.path.isdir(executablePath)
+                        os.path.exists(executablePath)
+                        and os.access(executablePath, existsAndExecutable)
+                        and not os.path.isdir(executablePath)
                 ):
                     return executablePath
 
@@ -634,17 +635,14 @@ class LocalApp:
 # with open("file2.txt", "w") as f2:
 #     f2.write("file2\ncontent")
 #
-# os.mkdir("find")
-# args = ["-name", "file1.txt"]
-# output = Find().exec(args=args)
-# stdout = output["stdout"]
-# os.rmdir("find")
 #
+# args = []
+# output = LocalApp("ls").exec(args=args)
+# stdout = output["stdout"]
 #
 #
 # os.remove("file1.txt")
 # os.remove("file2.txt")
 # os.chdir("..")
 # os.rmdir("apps")
-#
 # print(stdout)

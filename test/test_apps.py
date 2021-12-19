@@ -1,6 +1,6 @@
 from collections import deque
 import unittest
-
+import mock
 from apps import (
     Pwd,
     Cd,
@@ -25,6 +25,7 @@ class TestApps(unittest.TestCase):
     def setUp(self) -> None:
         os.mkdir("apps")
         os.chdir("apps")
+        os.mkdir("find")
         with open("file1.txt", "w") as f1:
             f1.write("abc\nadc\nabc\ndef")
         with open("file2.txt", "w") as f2:
@@ -41,8 +42,8 @@ class TestApps(unittest.TestCase):
         stdout1 = list(Ls().exec(args[0])["stdout"])
         stdout2 = list(Ls().exec(args[1])["stdout"])
         print(stdout2)
-        assert stdout1 == ['file1.txt\n', 'file2.txt\n']
-        assert stdout2 == ['file1.txt\n', 'file2.txt\n']
+        assert stdout1 == ['find\n', 'file1.txt\n', 'file2.txt\n']
+        assert stdout2 == ['find\n', 'file1.txt\n', 'file2.txt\n']
 
     def test_ls_wrong_args(self):
         args = ["", "./doc"]
@@ -404,12 +405,28 @@ class TestApps(unittest.TestCase):
         print(stdout)
         assert list(stdout) == ['./file1.txt\n']
 
-        os.mkdir("find")
+
         args = ["-name", "file1.txt"]
         output = Find().exec(args=args)
         stdout = output["stdout"]
-        os.rmdir("find")
         assert list(stdout) == ['./file1.txt\n']
+
+
+
+    def test_LocalApp(self):
+        args = []
+        output = LocalApp("ls").exec(args=args)
+        stdout = output["stdout"]
+        print(stdout)
+        assert list(stdout) == ['file1.txt\nfile2.txt\nfind\n']
+
+        sys = mock.MagicMock()
+        sys.configure_mock(platform='win32')
+        print(sys.platform)
+        args = []
+        output = LocalApp("ls").exec(args=args)
+        stdout = output["stdout"]
+        assert list(stdout) == ['file1.txt\nfile2.txt\nfind\n']
 
     #
     # def test_visit_singlequote_space(self):
@@ -773,8 +790,10 @@ class TestApps(unittest.TestCase):
     def tearDown(self) -> None:
         os.remove("file1.txt")
         os.remove("file2.txt")
+        os.rmdir("find")
         os.chdir("..")
         os.rmdir("apps")
+
 
 
 if __name__ == "__main__":
