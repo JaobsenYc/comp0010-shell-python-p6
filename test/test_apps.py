@@ -431,8 +431,6 @@ class TestApps(unittest.TestCase):
         stdout = output["stdout"]
         assert list(stdout) == ["file1.txt\nfile2.txt\nfind\n"]
 
-
-
     def tearDown(self) -> None:
         os.remove("file1.txt")
         os.remove("file2.txt")
