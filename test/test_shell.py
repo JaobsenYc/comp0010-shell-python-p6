@@ -1,74 +1,123 @@
 import unittest
-from abstract_syntax_tree import Substitution
-from visitor import ASTVisitor
+import subprocess
+
 from shell import eval, handle_arg_case
-from collections import deque
 from io import StringIO
 import sys
-import os
-import mock
-import traceback
 
 
-# class TestShell(unittest.TestCase):
+class OutputCapture(list):
+    def __enter__(self):
+        self._stdout = sys.stdout
+        sys.stdout = self._stringio = StringIO()
+        return self
 
-# def test_shell_eval_exception(self):
-
-#     # try:
-#     #     ASTVisitor()._getArgs([[Substitution("_ls notExist")]])
-#     # except Exception as e:
-#     #     eval("echo `_ls notExist`")
-#     out = sys.stderr
-#     print(out)
-#     assert len(out) > 0
-#     # self.assertEqual(out, traceback.format_exc())
-
-# def test_shell_eval_unsafe_error(self):
-#     capturedOutput = StringIO
-#     sys.stderr = capturedOutput
-#     eval("_ls notExist")
-#     sys.stderr = sys.__stderr__
-#     assert len(capturedOutput.getvalue()) > 0
-
-# def test_shell_eval_no_error(self):
-#     capturedOutput = StringIO
-#     sys.stdout = capturedOutput
-#     eval('echo "hello world"')
-#     sys.stdout = sys.__stdout__
-#     assert capturedOutput.getvalue().strip() == "hello world"
-
-#         eval('echo "hello world"')
-#         out = sys.stdout.getvalue()
-#         print("---------->", out)
-#         self.assertEqual("".join(out["stdout"]).strip(), "hello world!")
-#         self.assertEqual("".join(out["stderr"]).strip(), "")
-#         self.assertEqual(out["exit_code"], 0)
-
-#     def test_shell_handle_no_arg(self):
-
-#         out = sys.stdout.getvalue()
-#         with mock.patch(['-c echo "hello world"'], return_value="yes"):
-#             handle_arg_case([])
-#             out = sys.stdout.getvalue()
-#             self.assertEqual("".join(out["stdout"]).strip(), "hello world!")
-#             self.assertEqual("".join(out["stderr"]).strip(), "")
-#             self.assertEqual(out["exit_code"], 0)
-
-#     # def test_shell_handle_two_args(self):
-#     #     handle_arg_case(["-c", 'echo "hello world"'])
-#     #     out = sys.stdout.getvalue()
-#     #     self.assertEqual("".join(out["stdout"]).strip(), "hello world!")
-#     #     self.assertEqual("".join(out["stderr"]).strip(), "")
-#     #     self.assertEqual(out["exit_code"], 0)
-
-#     def test_shell_handle_wrong_num_arg(self):
-#         with self.assertRaises(ValueError):
-#             handle_arg_case(['echo "hello world"'])
-
-#     def test_shell_handle_unexpected_arg(self):
-#         with self.assertRaises(ValueError):
-#             handle_arg_case(["-d", 'echo "hello world"'])
+    def __exit__(self, *args):
+        self.extend(self._stringio.getvalue().splitlines())
+        del self._stringio
+        sys.stdout = self._stdout
 
 
-# if __name__ == "__main__":
-#     unittest.main()
+class ErrorCapture(list):
+    def __enter__(self):
+        self._stderr = sys.stderr
+        sys.stderr = self._stringio = StringIO()
+        return self
+
+    def __exit__(self, *args):
+        self.extend(self._stringio.getvalue().splitlines())
+        del self._stringio
+        sys.stderr = self._stderr
+
+
+class TestShell(unittest.TestCase):
+    @classmethod
+    def eval(cls, flag, cmdline, shell="/comp0010/sh"):
+        args = [
+            shell,
+            flag,
+            cmdline,
+        ]
+        p = subprocess.run(args, capture_output=True)
+        return (p.stdout.decode(), p.stderr.decode())
+
+    def test_shell_eval_exception(self):
+        out, err = self.eval("-c", "echo `_ls notExist`")
+        assert len(err) > 0
+
+    def test_shell_eval_unsafe_error(self):
+        out, err = self.eval("-c", "_ls notExist")
+        self.assertEqual(out.strip(), "Ls: notExist: No such directory")
+
+    def test_shell_eval_no_error(self):
+        out, err = self.eval("-c", 'echo "hello world"')
+        self.assertEqual(out.strip(), "hello world")
+
+    def test_shell_handle_no_arg(self):
+        process = subprocess.Popen(
+            ["/comp0010/sh"],
+            universal_newlines=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            stdin=subprocess.PIPE,
+        )
+        output, error = process.communicate('echo "hello world"')
+        self.assertEqual(output.strip(), "/comp0010> hello world\n/comp0010>")
+
+    # has been covered
+    def test_shell_handle_two_args(self):
+        pass
+
+    def test_shell_handle_wrong_num_arg(self):
+        out, err = self.eval("-d", 'echo "hello world"')
+        print(out, err)
+        assert len(err) > 0
+
+    def test_shell_handle_unexpected_arg(self):
+        out, err = self.eval("-d", 'echo "hello world"')
+        assert len(err) > 0
+
+    def test_eval(self):
+        with OutputCapture() as out:
+            eval('echo "hello world"')
+        self.assertEqual(out[0], "hello world")
+
+    def test_handle_arg_case(self):
+        with OutputCapture() as out:
+            handle_arg_case(["shell.py", "-c", 'echo "hello world"'])
+        self.assertEqual(out[0], "hello world")
+
+    def test_eval_parse_error(self):
+        with ErrorCapture() as err:
+            eval("")
+        self.assertGreater(len(err), 0)
+
+    def test_eval_app_error(self):
+        with ErrorCapture() as err:
+            eval("cat -a")
+        self.assertGreater(len(err), 0)
+
+    def test_eval_terminal_error(self):
+        with ErrorCapture() as err:
+            eval("pwd < one < two")
+        self.assertGreater(len(err), 0)
+
+    def test_handle_arg_case_toomany(self):
+        try:
+            handle_arg_case(["shell.py", "-c", "-p", 'echo "hello world"'])
+        except ValueError:
+            self.assertTrue(True)
+        else:
+            self.assertTrue(False)
+
+    def test_handle_arg_case_unrecognized(self):
+        try:
+            handle_arg_case(["shell.py", "-p", 'echo "hello world"'])
+        except ValueError:
+            self.assertTrue(True)
+        else:
+            self.assertTrue(False)
+
+
+if __name__ == "__main__":
+    unittest.main()

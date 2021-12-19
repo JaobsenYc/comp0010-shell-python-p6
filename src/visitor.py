@@ -64,12 +64,12 @@ class ASTVisitor(Visitor):
     :returns: this is a dictionary of srdout, stderr and exit_code
     """
 
-    def visit_single_quote(self, singleQuote):
-        assert isinstance(singleQuote, SingleQuote)
+    def visit_single_quote(self, single_quote):
+        assert isinstance(single_quote, SingleQuote)
 
-        quotedPart = singleQuote.quotedPart
+        quoted_part = single_quote.quotedPart
         res_deque = deque()
-        res_deque.append(quotedPart)
+        res_deque.append(quoted_part)
 
         return {"stdout": res_deque, "stderr": deque(), "exit_code": 0}
 
@@ -78,23 +78,23 @@ class ASTVisitor(Visitor):
     :returns: this is a dictionary of srdout, stderr and exit_code
     """
 
-    def visit_double_quote(self, doubleQuote):
-        assert isinstance(doubleQuote, DoubleQuote)
+    def visit_double_quote(self, double_quote):
+        assert isinstance(double_quote, DoubleQuote)
 
-        containSubstitution, quotedPart = (
-            doubleQuote.containSubstitution,
-            doubleQuote.quotedPart,
+        contain_substitution, quoted_part = (
+            double_quote.containSubstitution,
+            double_quote.quotedPart,
         )
-        assert isinstance(containSubstitution, bool)
-        assert isinstance(quotedPart, list)
+        assert isinstance(contain_substitution, bool)
+        assert isinstance(quoted_part, list)
 
         res = deque()
         err = deque()
 
-        if not containSubstitution:
-            res.append("".join(quotedPart))
+        if not contain_substitution:
+            res.append("".join(quoted_part))
         else:
-            for part in quotedPart:
+            for part in quoted_part:
                 if not isinstance(part, Substitution):
                     res.append(part)
                 else:
@@ -158,9 +158,9 @@ class ASTVisitor(Visitor):
     :returns: this is a dictionary of srdout, stderr and exit_code
     """
 
-    def visit_redirect_out(self, redirectOut, stdin=None):
+    def visit_redirect_out(self, redirect_out, stdin=None):
 
-        fs = glob(redirectOut.arg) or [redirectOut.arg]
+        fs = glob(redirect_out.arg) or [redirect_out.arg]
         n = len(fs)
         assert isinstance(fs, list)
 
@@ -185,7 +185,7 @@ class ASTVisitor(Visitor):
         assert isinstance(call, Call)
 
         redirects = call.redirects
-        appName = call.appName
+        app_name = call.appName
         args = call.args
 
         factory = AppsFactory()
@@ -193,12 +193,12 @@ class ASTVisitor(Visitor):
         err = deque()
 
         # "`echo echo` foo"
-        appName = self._getAppName(appName)
-        assert appName is not None
-        app = factory.getApp(appName)
+        app_name = self._getAppName(app_name)
+        assert app_name is not None
+        app = factory.getApp(app_name)
 
         try:
-            stdin, redirectOut = self._getRedirects(redirects)
+            stdin, redirect_out = self._getRedirects(redirects)
         except Exception as e:
             raise e
 
@@ -207,12 +207,12 @@ class ASTVisitor(Visitor):
             stdin = in_put or deque()
         assert stdin is not None
 
-        parsedArg, glob_index, globbed_result = self._getArgs(args)
+        parsed_arg, glob_index, globbed_result = self._getArgs(args)
 
         if len(glob_index) > 0:
-            final_args_lst = self._getGlobbedArg(parsedArg, glob_index, globbed_result)
+            final_args_lst = self._getGlobbedArg(parsed_arg, glob_index, globbed_result)
         else:
-            final_args_lst = [parsedArg]
+            final_args_lst = [parsed_arg]
 
         for final_args in final_args_lst:
             executed = app.exec(final_args, stdin=stdin)
@@ -221,8 +221,8 @@ class ASTVisitor(Visitor):
         assert isinstance(out, deque)
         assert isinstance(err, deque)
 
-        if redirectOut:
-            redirectOut.accept(self, stdin=out)
+        if redirect_out:
+            redirect_out.accept(self, stdin=out)
             return {"stdout": deque(), "stderr": err, "exit_code": len(err)}
         else:
             return {"stdout": out, "stderr": err, "exit_code": len(err)}
@@ -236,19 +236,19 @@ class ASTVisitor(Visitor):
         left = seq.left
         right = seq.right
 
-        outLeft = left.accept(self)
-        outRight = right.accept(self)
+        out_left = left.accept(self)
+        out_right = right.accept(self)
 
-        outLeft["stdout"].extend(outRight["stdout"])
-        outLeft["stderr"].extend(outRight["stderr"])
+        out_left["stdout"].extend(out_right["stdout"])
+        out_left["stderr"].extend(out_right["stderr"])
 
-        assert isinstance(outLeft["stdout"], deque)
-        assert isinstance(outLeft["stderr"], deque)
+        assert isinstance(out_left["stdout"], deque)
+        assert isinstance(out_left["stderr"], deque)
 
         return {
-            "stdout": outLeft["stdout"],
-            "stderr": outLeft["stderr"],
-            "exit_code": outLeft["exit_code"] or outRight["exit_code"],
+            "stdout": out_left["stdout"],
+            "stderr": out_left["stderr"],
+            "exit_code": out_left["exit_code"] or out_right["exit_code"],
         }
 
     """
@@ -260,17 +260,17 @@ class ASTVisitor(Visitor):
         left = pipe.left
         right = pipe.right
 
-        outLeft = left.accept(self)
-        outRight = right.accept(self, input=outLeft["stdout"])
-        outLeft["stderr"].extend(outRight["stderr"])
+        out_left = left.accept(self)
+        out_right = right.accept(self, input=out_left["stdout"])
+        out_left["stderr"].extend(out_right["stderr"])
 
-        assert isinstance(outLeft["stdout"], deque)
-        assert isinstance(outLeft["stderr"], deque)
+        assert isinstance(out_left["stdout"], deque)
+        assert isinstance(out_left["stderr"], deque)
 
         return {
-            "stdout": outRight["stdout"],
-            "stderr": outLeft["stderr"],
-            "exit_code": outLeft["exit_code"] or outRight["exit_code"],
+            "stdout": out_right["stdout"],
+            "stderr": out_left["stderr"],
+            "exit_code": out_left["exit_code"] or out_right["exit_code"],
         }
 
     # check if args includes double quote that needs to further eval
@@ -279,69 +279,69 @@ class ASTVisitor(Visitor):
     def _getArgs(self, args):
 
         globbed_result = []
-        parsedArg = []
+        parsed_arg = []
         glob_index = []
 
         for n, arg in enumerate(args):
 
             # arg: []
-            argOut = deque()
-            for subArg in arg:
-                argOut_new, glob_index = self._getSubArg(subArg, glob_index, n)
-                argOut.extend(argOut_new)
+            arg_out = deque()
+            for sub_arg in arg:
+                arg_out_new, glob_index = self._getSubArg(sub_arg, glob_index, n)
+                arg_out.extend(arg_out_new)
 
-            parsedArg.append("".join(argOut))
+            parsed_arg.append("".join(arg_out))
             if n in glob_index:
-                globbed_result.append(glob(parsedArg[-1]))
+                globbed_result.append(glob(parsed_arg[-1]))
 
-        return (parsedArg, glob_index, globbed_result)
+        return (parsed_arg, glob_index, globbed_result)
 
-    def _getSubArg(self, subArg, glob_index, n):
-        argOut = deque()
+    def _getSubArg(self, sub_arg, glob_index, n):
+        arg_out = deque()
 
-        if isinstance(subArg, (DoubleQuote, SingleQuote, Substitution)):
-            executedProcess = subArg.accept(self)
+        if isinstance(sub_arg, (DoubleQuote, SingleQuote, Substitution)):
+            executed_process = sub_arg.accept(self)
 
-            if executedProcess["exit_code"]:
-                raise Exception(executedProcess["stderr"])
-            argOut.append("".join(executedProcess["stdout"]))
+            if executed_process["exit_code"]:
+                raise Exception(executed_process["stderr"])
+            arg_out.append("".join(executed_process["stdout"]))
 
         # ['a','*.py']
-        elif isinstance(subArg, str) and "*" in subArg:
+        elif isinstance(sub_arg, str) and "*" in sub_arg:
             glob_index.append(n)
-            argOut.append(subArg)
+            arg_out.append(sub_arg)
 
         else:
-            argOut.append(subArg)
+            arg_out.append(sub_arg)
 
-        return (argOut, glob_index)
+        return (arg_out, glob_index)
 
-    def _getAppName(self, appName):
+    def _getAppName(self, app_name):
 
-        if isinstance(appName, Substitution):
-            subExecuted = appName.accept(self)
-            if subExecuted["exit_code"] != 0:
-                raise Exception(f"Cannot substitute {appName} as app name")
+        if isinstance(app_name, Substitution):
+            sub_executed = app_name.accept(self)
+            if sub_executed["exit_code"] != 0:
+                raise Exception(f"Cannot substitute {app_name} as app name")
 
-            assert len(subExecuted["stderr"]) == 0
-            appName = "".join(subExecuted["stdout"]).strip(" \n")
+            assert len(sub_executed["stderr"]) == 0
+            app_name = "".join(sub_executed["stdout"]).strip(" \n")
 
-        return appName
+        return app_name
 
     def _getRedirects(self, redirects):
 
-        stdin, redirectOut = None, None
+        stdin, redirect_out = None, None
 
         for r in redirects:
             if isinstance(r, RedirectIn) and not stdin:
                 stdin = r.accept(self)["stdout"]
-            elif isinstance(r, RedirectOut) and not redirectOut:
-                redirectOut = r
+            elif isinstance(r, RedirectOut) and not redirect_out:
+                redirect_out = r
             else:
                 # not related to unsafe app, the error of system
                 raise Exception("invalid redirections")
 
-        return (stdin, redirectOut)
+        return (stdin, redirect_out)
 
     def _getGlobbedArg(self, parsedArg, glob_index, globbed_result):
 
@@ -349,17 +349,17 @@ class ASTVisitor(Visitor):
         glob_pairs = product(*globbed_result)
 
         for pair in glob_pairs:
-            argsForThisPair = []
+            args_for_this_pair = []
             count = 0
 
             for arg_index in range(len(parsedArg)):
 
                 if arg_index in glob_index:
-                    argsForThisPair.append(pair[count])
+                    args_for_this_pair.append(pair[count])
                     count += 1
                 else:
-                    argsForThisPair.append(parsedArg[arg_index])
+                    args_for_this_pair.append(parsedArg[arg_index])
 
-            args_lst.append(argsForThisPair)
+            args_lst.append(args_for_this_pair)
 
         return args_lst

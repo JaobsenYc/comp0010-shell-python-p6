@@ -567,6 +567,7 @@ class LocalApp:
         for p in path:
             for executable in possibleExecutable:
                 executablePath = os.path.join(os.path.normcase(p), executable)
+
                 if self._is_valid_path_to_executable(executablePath) is not None:
                     return executablePath
 
@@ -595,12 +596,12 @@ class LocalApp:
         return possibleExecutable
 
     def _is_valid_path_to_executable(
-            self, executablePath, existsAndExecutable=os.F_OK | os.X_OK
+        self, executablePath, existsAndExecutable=os.F_OK | os.X_OK
     ):
         if (
-                os.path.exists(executablePath)
-                and os.access(executablePath, existsAndExecutable)
-                and not os.path.isdir(executablePath)
+            os.path.exists(executablePath)
+            and os.access(executablePath, existsAndExecutable)
+            and not os.path.isdir(executablePath)
         ):
             return executablePath
         else:
