@@ -159,7 +159,6 @@ class ASTVisitor(Visitor):
     """
 
     def visit_redirect_out(self, redirectOut, stdin=None):
-        assert stdin
 
         fs = glob(redirectOut.arg) or [redirectOut.arg]
         n = len(fs)
@@ -349,3 +348,7 @@ class ASTVisitor(Visitor):
             args_lst.append(argsForThisPair)
 
         return args_lst
+
+
+if __name__ == "__main__":
+    ASTVisitor().visit_redirect_out(RedirectOut("*.txt"))
