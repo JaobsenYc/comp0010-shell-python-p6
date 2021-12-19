@@ -18,6 +18,7 @@ RUN chmod u+x /comp0010/tools/analysis
 RUN chmod u+x /comp0010/tools/pylint
 RUN chmod u+x /comp0010/tools/scalene
 RUN chmod u+x /comp0010/tools/mccabe
+RUN chmod u+x /comp0010/tools/mutmut
 
 RUN cd /comp0010 && python -m pip install -r requirements.txt
 
