@@ -1,74 +1,49 @@
 import unittest
-from abstract_syntax_tree import Substitution
-from visitor import ASTVisitor
-from shell import eval, handle_arg_case
-from collections import deque
-from io import StringIO
-import sys
-import os
 import mock
-import traceback
+import subprocess
 
 
 class TestShell(unittest.TestCase):
+    @classmethod
+    def eval(cls, flag, cmdline, shell="/comp0010/sh"):
+        args = [
+            shell,
+            flag,
+            cmdline,
+        ]
+        p = subprocess.run(args, capture_output=True)
+        return (p.stdout.decode(), p.stderr.decode())
 
-    # def test_shell_eval_exception(self):
+    def test_shell_eval_exception(self):
+        out, err = self.eval("-c", "echo `_ls notExist`")
+        assert len(err) > 0
 
-    #     # try:
-    #     #     ASTVisitor()._getArgs([[Substitution("_ls notExist")]])
-    #     # except Exception as e:
-    #     #     eval("echo `_ls notExist`")
-    #     out = sys.stderr
-    #     print(out)
-    #     assert len(out) > 0
-    #     # self.assertEqual(out, traceback.format_exc())
+    def test_shell_eval_unsafe_error(self):
+        out, err = self.eval("-c", "_ls notExist")
+        self.assertEqual(out.strip(), "Ls: notExist: No such directory")
 
-    # def test_shell_eval_unsafe_error(self):
-    #     capturedOutput = StringIO
-    #     sys.stderr = capturedOutput
-    #     eval("_ls notExist")
-    #     sys.stderr = sys.__stderr__
-    #     assert len(capturedOutput.getvalue()) > 0
+    def test_shell_eval_no_error(self):
+        out, err = self.eval("-c", 'echo "hello world"')
+        self.assertEqual(out.strip(), "hello world")
 
-    # def test_shell_eval_no_error(self):
-    #     capturedOutput = StringIO
-    #     sys.stdout = capturedOutput
-    #     eval('echo "hello world"')
-    #     sys.stdout = sys.__stdout__
-    #     assert capturedOutput.getvalue().strip() == "hello world"
+    def test_shell_handle_no_arg(self):
+        with mock.patch("builtins.input", return_value='-c echo "hello world"'):
+            self.assertEqual(self.eval("")[0].strip(), "hello world")
 
-    #         eval('echo "hello world"')
-    #         out = sys.stdout.getvalue()
-    #         print("---------->", out)
-    #         self.assertEqual("".join(out["stdout"]).strip(), "hello world!")
-    #         self.assertEqual("".join(out["stderr"]).strip(), "")
-    #         self.assertEqual(out["exit_code"], 0)
+    # has been covered
+    def test_shell_handle_two_args(self):
+        pass
 
-    #     def test_shell_handle_no_arg(self):
+    def test_shell_handle_wrong_num_arg(self):
+        out, err = self.eval("-d", 'echo "hello world"')
+        print(out, err)
+        assert len(err) > 0
 
-    #         out = sys.stdout.getvalue()
-    #         with mock.patch(['-c echo "hello world"'], return_value="yes"):
-    #             handle_arg_case([])
-    #             out = sys.stdout.getvalue()
-    #             self.assertEqual("".join(out["stdout"]).strip(), "hello world!")
-    #             self.assertEqual("".join(out["stderr"]).strip(), "")
-    #             self.assertEqual(out["exit_code"], 0)
-
-    #     # def test_shell_handle_two_args(self):
-    #     #     handle_arg_case(["-c", 'echo "hello world"'])
-    #     #     out = sys.stdout.getvalue()
-    #     #     self.assertEqual("".join(out["stdout"]).strip(), "hello world!")
-    #     #     self.assertEqual("".join(out["stderr"]).strip(), "")
-    #     #     self.assertEqual(out["exit_code"], 0)
-
-    #     def test_shell_handle_wrong_num_arg(self):
-    #         with self.assertRaises(ValueError):
-    #             handle_arg_case(['echo "hello world"'])
-
-    #     def test_shell_handle_unexpected_arg(self):
-    #         with self.assertRaises(ValueError):
-    #             handle_arg_case(["-d", 'echo "hello world"'])
+    def test_shell_handle_unexpected_arg(self):
+        out, err = self.eval("-d", 'echo "hello world"')
+        print(out, err)
+        assert len(out) > 0
 
 
-# if __name__ == "__main__":
-#     unittest.main()
+if __name__ == "__main__":
+    unittest.main()
