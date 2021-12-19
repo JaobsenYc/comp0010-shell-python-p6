@@ -95,7 +95,6 @@ class Cat:
                     std_dict["exit_code"] = "1"
                     return std_dict
 
-
         else:
             stdout = stdin
 
@@ -518,7 +517,6 @@ class Find:
 
             for d in dirs:
                 d1 = os.path.join(current, d)
-                print("d1",d1)
                 if not os.path.isdir(d1):
                     if fnmatch.fnmatch(d, pattern):
                         res.append("/".join([current, d]))
@@ -547,9 +545,9 @@ class LocalApp:
         if os.path.dirname(app):
             # path exists,is accessible, and not a directory
             if (
-                    os.path.exists(app)
-                    and os.access(app, existsAndExecutable)
-                    and not os.path.isdir(app)
+                os.path.exists(app)
+                and os.access(app, existsAndExecutable)
+                and not os.path.isdir(app)
             ):
                 return self.app
             return None
@@ -588,9 +586,9 @@ class LocalApp:
             for executable in possibleExecutable:
                 executablePath = os.path.join(os.path.normcase(p), executable)
                 if (
-                        os.path.exists(executablePath)
-                        and os.access(executablePath, existsAndExecutable)
-                        and not os.path.isdir(executablePath)
+                    os.path.exists(executablePath)
+                    and os.access(executablePath, existsAndExecutable)
+                    and not os.path.isdir(executablePath)
                 ):
                     return executablePath
 
