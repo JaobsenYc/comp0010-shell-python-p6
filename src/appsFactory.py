@@ -1,4 +1,4 @@
-from src.apps import (
+from apps import (
     Pwd,
     Cd,
     Echo,

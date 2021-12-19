@@ -594,21 +594,31 @@ class LocalApp:
                 ):
                     return executablePath
 
-    def exec(self, args, stdin=None):
+    def exec(self, args, stdin=deque()):
         std_dict = {"stdout": deque(), "stderr": deque(), "exit_code": 0}
         stdout = deque()
         sysApp = self._getApp()
         if sysApp is not None:
-            process = Popen(
-                f"{sysApp} {' '.join(args)}",
-                universal_newlines=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                stdin=subprocess.PIPE,
-            )
-            output, error = process.communicate(input=stdin)
+            stdin = "".join(stdin)
+            if len(stdin) > 0:
+                process = Popen(
+                    f"{sysApp} {' '.join(args)}",
+                    universal_newlines=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    stdin=subprocess.PIPE,
+                )
+                output, error = process.communicate(stdin)
+            else:
+                process = Popen(
+                    f"{sysApp} {' '.join(args)}",
+                    universal_newlines=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                )
+                output, error = process.communicate()
             if error != "":
-                raise Exception(error)
+                raise Exception(f"{self.app}: " + error)
             else:
                 stdout.append(output)
         else:

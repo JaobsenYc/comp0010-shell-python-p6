@@ -1,6 +1,6 @@
 from parsy import generate, regex, seq, string
 
-from src import abstract_syntax_tree
+import abstract_syntax_tree
 
 pipeOp = string("|")
 semiOp = string(";")

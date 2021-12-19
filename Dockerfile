@@ -1,7 +1,7 @@
 FROM python:3.8-buster
 
 ENV DEBIAN_FRONTEND=noninteractive
-
+ENV PYTHONPATH "${PYTHONPATH}:/comp0010/src"
 RUN apt-get update \
     && apt-get -y install --no-install-recommends apt-utils dialog 2>&1 \
     && apt-get -y install git procps lsb-release \
