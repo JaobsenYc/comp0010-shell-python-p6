@@ -42,8 +42,8 @@ class TestApps(unittest.TestCase):
         stdout1 = list(Ls().exec(args[0])["stdout"])
         stdout2 = list(Ls().exec(args[1])["stdout"])
         print(stdout2)
-        assert stdout1 == ['find\n', 'file1.txt\n', 'file2.txt\n']
-        assert stdout2 == ['find\n', 'file1.txt\n', 'file2.txt\n']
+        assert stdout1 == ["find\n", "file1.txt\n", "file2.txt\n"]
+        assert stdout2 == ["find\n", "file1.txt\n", "file2.txt\n"]
 
     def test_ls_wrong_args(self):
         args = ["", "./doc"]
@@ -62,7 +62,7 @@ class TestApps(unittest.TestCase):
         output = Cat().exec(args=args)
         stdout = output["stdout"].popleft()
 
-        assert stdout == f"abc\nadc\nabc\ndef"
+        assert stdout == "abc\nadc\nabc\ndef"
 
     def test_cat_wrong_args(self):
         args = ["file3.txt"]
@@ -78,12 +78,6 @@ class TestApps(unittest.TestCase):
         output = Cat().exec(args=args, stdin=stdin)
         stdout = output["stdout"].popleft()
         assert stdout == word
-
-    def test_cat_wrong_args(self):
-        args = ["file3.txt"]
-        output = Cat().exec(args=args)
-        stderr = output["stderr"]
-        assert stderr == f"Cat: {args[0]}: No such file or directory"
 
     def test_cd_wrong(self):
         args = ["cd"]
@@ -149,13 +143,13 @@ class TestApps(unittest.TestCase):
         output = Head().exec(args=args)
         stdout = output["stdout"]
 
-        assert list(stdout) == ['abc\n', 'adc\n']
+        assert list(stdout) == ["abc\n", "adc\n"]
 
         args = ["file1.txt"]
         output = Head().exec(args=args)
         stdout = output["stdout"]
 
-        assert list(stdout) == ['abc\n', 'adc\n', 'abc\n', 'def']
+        assert list(stdout) == ["abc\n", "adc\n", "abc\n", "def"]
 
     def test_tail(self):
         args = ["-i", "2", "file1.txt"]
@@ -196,13 +190,13 @@ class TestApps(unittest.TestCase):
         output = Tail().exec(args=args)
         stdout = output["stdout"]
 
-        assert list(stdout) == ['adc\n', 'abc\n', 'def']
+        assert list(stdout) == ["adc\n", "abc\n", "def"]
 
         args = ["file1.txt"]
         output = Tail().exec(args=args)
         stdout = output["stdout"]
 
-        assert list(stdout) == ['abc\n', 'adc\n', 'abc\n', 'def']
+        assert list(stdout) == ["abc\n", "adc\n", "abc\n", "def"]
 
     def test_Grep(self):
         args = []
@@ -213,26 +207,26 @@ class TestApps(unittest.TestCase):
         args = ["a.*?c", "file1.txt"]
         output = Grep().exec(args=args)
         stdout = output["stdout"]
-        assert list(stdout) == ['abc\n', 'adc\n', 'abc\n']
+        assert list(stdout) == ["abc\n", "adc\n", "abc\n"]
 
         args = ["a.*?c", "file1.txt", "file2.txt"]
         output = Grep().exec(args=args)
         stdout = output["stdout"]
-        assert list(stdout) == ['file1.txt:abc\n', 'file1.txt:adc\n', 'file1.txt:abc\n']
+        assert list(stdout) == ["file1.txt:abc\n", "file1.txt:adc\n", "file1.txt:abc\n"]
 
         args = ["AAA", "file3.txt"]
         output = Grep().exec(args=args)
         stderr = output["stderr"]
         assert stderr == f"Grep: {args[1]}: No such file or directory"
 
-        stdin = deque(['abc\n', 'adc\n', 'abc\n'])
+        stdin = deque(["abc\n", "adc\n", "abc\n"])
         args = ["a.*?c"]
         output = Grep().exec(args=args, stdin=stdin)
         stdout = output["stdout"]
 
-        assert list(stdout) == ['abc\n', 'adc\n', 'abc\n']
+        assert list(stdout) == ["abc\n", "adc\n", "abc\n"]
 
-        stdin = deque(['abc\n', 'adc\n', 'abc\n'])
+        stdin = deque(["abc\n", "adc\n", "abc\n"])
         args = ["z"]
         output = Grep().exec(args=args, stdin=stdin)
         stdout = output["stdout"]
@@ -263,29 +257,29 @@ class TestApps(unittest.TestCase):
         args = ["-b", "1,3", "file1.txt"]
         output = Cut().exec(args=args)
         stdout = output["stdout"]
-        assert list(stdout) == ['ac\n', 'ac\n', 'ac\n', 'df\n']
+        assert list(stdout) == ["ac\n", "ac\n", "ac\n", "df\n"]
 
         args = ["-b", "1-3", "file1.txt"]
         output = Cut().exec(args=args)
         stdout = output["stdout"]
-        assert list(stdout) == ['abc\n', 'adc\n', 'abc\n', 'def\n']
+        assert list(stdout) == ["abc\n", "adc\n", "abc\n", "def\n"]
 
         args = ["-b", "1-2,3", "file1.txt"]
         output = Cut().exec(args=args)
         stdout = output["stdout"]
-        assert list(stdout) == ['abc\n', 'adc\n', 'abc\n', 'def\n']
+        assert list(stdout) == ["abc\n", "adc\n", "abc\n", "def\n"]
 
-        stdin = deque(['abc\n', 'adc\n', 'abc\n'])
+        stdin = deque(["abc\n", "adc\n", "abc\n"])
         args = ["-c", "1-2,3"]
         output = Cut().exec(args=args, stdin=stdin)
         stderr = output["stderr"]
         assert stderr == "Cut: Wrong Flags"
 
-        stdin = deque(['abc\n', 'adc\n', 'abc\n', 'deffffff\n'])
+        stdin = deque(["abc\n", "adc\n", "abc\n", "deffffff\n"])
         args = ["-b", "1-2,3,5"]
         output = Cut().exec(args=args, stdin=stdin)
         stdout = output["stdout"]
-        assert list(stdout) == ['abc\n', 'adc\n', 'abc\n', 'deff\n']
+        assert list(stdout) == ["abc\n", "adc\n", "abc\n", "deff\n"]
 
     def test_Uniq(self):
         args = ["-i ", "file1.txt", "file2.txt"]
@@ -311,24 +305,24 @@ class TestApps(unittest.TestCase):
         args = ["-i", "file1.txt"]
         output = Uniq().exec(args=args)
         stdout = output["stdout"]
-        assert list(stdout) == ['abc\n', 'adc\n', 'abc\n', 'def']
+        assert list(stdout) == ["abc\n", "adc\n", "abc\n", "def"]
 
         args = ["file1.txt"]
         output = Uniq().exec(args=args)
         stdout = output["stdout"]
-        assert list(stdout) == ['abc\n', 'adc\n', 'abc\n', 'def']
+        assert list(stdout) == ["abc\n", "adc\n", "abc\n", "def"]
 
-        stdin = deque(['abc\n', 'abc\n', 'adc\n'])
+        stdin = deque(["abc\n", "abc\n", "adc\n"])
         args = []
         output = Uniq().exec(args=args, stdin=stdin)
         stdout = output["stdout"]
-        assert list(stdout) == ['abc\n', 'adc\n']
+        assert list(stdout) == ["abc\n", "adc\n"]
 
-        stdin = deque(['abc\n', 'abc\n', 'adc\n'])
+        stdin = deque(["abc\n", "abc\n", "adc\n"])
         args = ["-i"]
         output = Uniq().exec(args=args, stdin=stdin)
         stdout = output["stdout"]
-        assert list(stdout) == ['abc\n', 'adc\n']
+        assert list(stdout) == ["abc\n", "adc\n"]
 
     def test_Sort(self):
         args = ["-r ", "file1.txt", "file2.txt"]
@@ -354,24 +348,24 @@ class TestApps(unittest.TestCase):
         args = ["-r", "file1.txt"]
         output = Sort().exec(args=args)
         stdout = output["stdout"]
-        assert list(stdout) == ['def\n', 'adc\n', 'abc\n', 'abc\n']
+        assert list(stdout) == ["def\n", "adc\n", "abc\n", "abc\n"]
 
         args = ["file1.txt"]
         output = Sort().exec(args=args)
         stdout = output["stdout"]
-        assert list(stdout) == ['abc\n', 'abc\n', 'adc\n', 'def\n']
+        assert list(stdout) == ["abc\n", "abc\n", "adc\n", "def\n"]
 
-        stdin = deque(['abc\n', 'abc\n', 'adc\n'])
+        stdin = deque(["abc\n", "abc\n", "adc\n"])
         args = []
         output = Sort().exec(args=args, stdin=stdin)
         stdout = output["stdout"]
-        assert list(stdout) == ['abc\n', 'abc\n', 'adc\n']
+        assert list(stdout) == ["abc\n", "abc\n", "adc\n"]
 
-        stdin = deque(['abc\n', 'abc\n', 'adc\n'])
+        stdin = deque(["abc\n", "abc\n", "adc\n"])
         args = ["-r"]
         output = Sort().exec(args=args, stdin=stdin)
         stdout = output["stdout"]
-        assert list(stdout) == ['adc\n', 'abc\n', 'abc\n']
+        assert list(stdout) == ["adc\n", "abc\n", "abc\n"]
 
     def test_Find(self):
         args = ["-nam", "file1.txt"]
@@ -397,36 +391,33 @@ class TestApps(unittest.TestCase):
         args = ["-name", "file1.txt"]
         output = Find().exec(args=args)
         stdout = output["stdout"]
-        assert list(stdout) == ['./file1.txt\n']
+        assert list(stdout) == ["./file1.txt\n"]
 
         args = [".", "-name", "file1.txt"]
         output = Find().exec(args=args)
         stdout = output["stdout"]
         print(stdout)
-        assert list(stdout) == ['./file1.txt\n']
-
+        assert list(stdout) == ["./file1.txt\n"]
 
         args = ["-name", "file1.txt"]
         output = Find().exec(args=args)
         stdout = output["stdout"]
-        assert list(stdout) == ['./file1.txt\n']
-
-
+        assert list(stdout) == ["./file1.txt\n"]
 
     def test_LocalApp(self):
         args = []
         output = LocalApp("ls").exec(args=args)
         stdout = output["stdout"]
         print(stdout)
-        assert list(stdout) == ['file1.txt\nfile2.txt\nfind\n']
+        assert list(stdout) == ["file1.txt\nfile2.txt\nfind\n"]
 
         sys = mock.MagicMock()
-        sys.configure_mock(platform='win32')
+        sys.configure_mock(platform="win32")
         print(sys.platform)
         args = []
         output = LocalApp("ls").exec(args=args)
         stdout = output["stdout"]
-        assert list(stdout) == ['file1.txt\nfile2.txt\nfind\n']
+        assert list(stdout) == ["file1.txt\nfile2.txt\nfind\n"]
 
     #
     # def test_visit_singlequote_space(self):
@@ -793,7 +784,6 @@ class TestApps(unittest.TestCase):
         os.rmdir("find")
         os.chdir("..")
         os.rmdir("apps")
-
 
 
 if __name__ == "__main__":

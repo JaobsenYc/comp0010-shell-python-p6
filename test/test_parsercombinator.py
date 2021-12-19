@@ -5,7 +5,6 @@ from abstract_syntax_tree import (
     DoubleQuote,
     Substitution,
     SingleQuote,
-    DoubleQuote,
     RedirectIn,
     RedirectOut,
     Call,

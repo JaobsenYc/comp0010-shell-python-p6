@@ -17,6 +17,7 @@ RUN chmod u+x /comp0010/tools/coverage
 RUN chmod u+x /comp0010/tools/analysis
 RUN chmod u+x /comp0010/tools/pylint
 RUN chmod u+x /comp0010/tools/scalene
+RUN chmod u+x /comp0010/tools/mccabe
 
 RUN cd /comp0010 && python -m pip install -r requirements.txt
 

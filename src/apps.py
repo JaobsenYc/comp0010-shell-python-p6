@@ -292,7 +292,8 @@ class Cut:
 
                 [lines.extend(i.splitlines()) for i in input]
             else:
-                std_dict["stderr"] = "Cut: Wrong number of command line arguments"
+                err = "Cut: Wrong number of command line arguments"
+                std_dict["stderr"] = err
                 std_dict["exit_code"] = "1"
                 return std_dict
 
@@ -526,6 +527,7 @@ class Find:
 
         return res
 
+
 #
 # class NotSupported:
 #     def __init__(self, app_token):
@@ -541,15 +543,11 @@ class LocalApp:
 
     def _getApp(self):
         app = self.app
-        existsAndExecutable = os.F_OK | os.X_OK
+        assert app is not None and type(app) == str
         # is path
         if os.path.dirname(app):
             # path exists,is accessible, and not a directory
-            if (
-                    os.path.exists(app)
-                    and os.access(app, existsAndExecutable)
-                    and not os.path.isdir(app)
-            ):
+            if self._is_valid_path_to_executable(self.app) is not None:
                 return self.app
             return None
 
@@ -563,8 +561,17 @@ class LocalApp:
         # Split each path into a list
         path = path.split(os.pathsep)
 
-        possibleExecutable = [app]
         # windows has to check file extension
+        possibleExecutable = self._get_system_executables(app, path)
+
+        for p in path:
+            for executable in possibleExecutable:
+                executablePath = os.path.join(os.path.normcase(p), executable)
+                if self._is_valid_path_to_executable(executablePath) is not None:
+                    return executablePath
+
+    def _get_system_executables(self, app, path):
+        possibleExecutable = [app]
         if sys.platform == "win32":
             if os.curdir not in path:
                 # add current directory to path so
@@ -574,28 +581,35 @@ class LocalApp:
             pathExtensions = os.getenv("PATHEXT").split(os.pathsep)
             pathExtensionList = [e for e in pathExtensions if e is not None]
 
-            for extension in pathExtensionList:
-                if app.lower().endswith(extension.lower()):
-                    possibleExecutable = [app]
-                    break
-            else:
-                possibleExecutable = [
-                    app + extension for extension in pathExtensionList
-                ]
+            possibleExecutable = self._get_possible_executable(app, pathExtensionList)
+        return possibleExecutable
 
-        for p in path:
-            for executable in possibleExecutable:
-                executablePath = os.path.join(os.path.normcase(p), executable)
-                if (
-                        os.path.exists(executablePath)
-                        and os.access(executablePath, existsAndExecutable)
-                        and not os.path.isdir(executablePath)
-                ):
-                    return executablePath
+    def _get_possible_executable(self, app, pathExtensionList):
+        for extension in pathExtensionList:
+            if app.lower().endswith(extension.lower()):
+                possibleExecutable = [app]
+                break
+        else:
+            possibleExecutable = [app + extension for extension in pathExtensionList]
+
+        return possibleExecutable
+
+    def _is_valid_path_to_executable(
+        self, executablePath, existsAndExecutable=os.F_OK | os.X_OK
+    ):
+        if (
+            os.path.exists(executablePath)
+            and os.access(executablePath, existsAndExecutable)
+            and not os.path.isdir(executablePath)
+        ):
+            return executablePath
+        else:
+            return None
 
     def exec(self, args=[], stdin=deque()):
         std_dict = {"stdout": deque(), "stderr": deque(), "exit_code": 0}
         stdout = deque()
+        assert type(stdin) == deque and type(args) == list
         sysApp = self._getApp()
         if sysApp is not None:
             stdin = "".join(stdin)
