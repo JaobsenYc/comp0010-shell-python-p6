@@ -567,7 +567,6 @@ class LocalApp:
         for p in path:
             for executable in possibleExecutable:
                 executablePath = os.path.join(os.path.normcase(p), executable)
-
                 if self._is_valid_path_to_executable(executablePath) is not None:
                     return executablePath
 
@@ -582,10 +581,10 @@ class LocalApp:
             pathExtensions = os.getenv("PATHEXT").split(os.pathsep)
             pathExtensionList = [e for e in pathExtensions if e is not None]
 
-            possibleExecutable = self._get_possible_executable(app, pathExtensionList)
+            possibleExecutable = self._get_possible_exec(app, pathExtensionList)
         return possibleExecutable
 
-    def _get_possible_executable(self, app, pathExtensionList):
+    def _get_possible_exec(self, app, pathExtensionList):
         for extension in pathExtensionList:
             if app.lower().endswith(extension.lower()):
                 possibleExecutable = [app]
