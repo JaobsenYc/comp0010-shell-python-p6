@@ -1,18 +1,35 @@
 import unittest
 import subprocess
+
+from parsy import ParseError
 from shell import eval, handle_arg_case
-from io import StringIO 
+from io import StringIO
 import sys
+
 
 class OutputCapture(list):
     def __enter__(self):
         self._stdout = sys.stdout
         sys.stdout = self._stringio = StringIO()
         return self
+
     def __exit__(self, *args):
         self.extend(self._stringio.getvalue().splitlines())
-        del self._stringio  
+        del self._stringio
         sys.stdout = self._stdout
+
+
+class ErrorCapture(list):
+    def __enter__(self):
+        self._stderr = sys.stderr
+        sys.stderr = self._stringio = StringIO()
+        return self
+
+    def __exit__(self, *args):
+        self.extend(self._stringio.getvalue().splitlines())
+        del self._stringio
+        sys.stderr = self._stderr
+
 
 class TestShell(unittest.TestCase):
     @classmethod
@@ -68,8 +85,39 @@ class TestShell(unittest.TestCase):
 
     def test_handle_arg_case(self):
         with OutputCapture() as out:
-            handle_arg_case(['shell.py', '-c', 'echo "hello world"'])
+            handle_arg_case(["shell.py", "-c", 'echo "hello world"'])
         self.assertEqual(out[0], "hello world")
+
+    def test_eval_parse_error(self):
+        with ErrorCapture() as err:
+            eval("")
+        self.assertGreater(len(err), 0)
+
+    def test_eval_app_error(self):
+        with ErrorCapture() as err:
+            eval("cat -a")
+        self.assertGreater(len(err), 0)
+
+    def test_eval_terminal_error(self):
+        with ErrorCapture() as err:
+            eval("pwd < one < two")
+        self.assertGreater(len(err), 0)
+
+    def test_handle_arg_case_toomany(self):
+        try:
+            handle_arg_case(["shell.py", "-c", "-p", 'echo "hello world"'])
+        except ValueError:
+            self.assertTrue(True)
+        else:
+            self.assertTrue(False)
+
+    def test_handle_arg_case_unrecognized(self):
+        try:
+            handle_arg_case(["shell.py", "-p", 'echo "hello world"'])
+        except ValueError:
+            self.assertTrue(True)
+        else:
+            self.assertTrue(False)
 
 
 if __name__ == "__main__":
