@@ -25,35 +25,35 @@ class Visitor(ABC):
     """
 
     @abstractmethod
-    def visitSingleQuote(self, singleQuote):
+    def visit_single_quote(self, singleQuote):
         """visit singlequote"""
 
     @abstractmethod
-    def visitDoubleQuote(self, doubleQuote):
+    def visit_double_quote(self, doubleQuote):
         """visit doublequote"""
 
     @abstractmethod
-    def visitSub(self, sub):
+    def visit_sub(self, sub):
         """visit substitution"""
 
     @abstractmethod
-    def visitRedirectIn(self, redirectIn):
+    def visit_redirect_in(self, redirectIn):
         """visit redirectin"""
 
     @abstractmethod
-    def visitRedirectOut(self, redirectOut):
+    def visit_redirect_out(self, redirectOut):
         """visit redirectout"""
 
     @abstractmethod
-    def visitCall(self, call, input=None):
+    def visit_call(self, call, input=None):
         """visit call"""
 
     @abstractmethod
-    def visitSeq(self, seq):
+    def visit_seq(self, seq):
         """visit sequence"""
 
     @abstractmethod
-    def visitPipe(self, pipe):
+    def visit_pipe(self, pipe):
         """visit pipe"""
 
 
@@ -349,4 +349,3 @@ class ASTVisitor(Visitor):
             args_lst.append(argsForThisPair)
 
         return args_lst
-
