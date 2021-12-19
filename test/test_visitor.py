@@ -70,9 +70,7 @@ class TestASTVisitor(unittest.TestCase):
         i = DoubleQuote(["a", Substitution("_ls a b"), "b"], True)
         out = self.visitor.visit_double_quote(i)
         self.assertEqual("".join(out["stdout"]), "ab")
-        self.assertEqual(
-            "".join(out["stderr"]), "wrong number of command line arguments"
-        )
+        assert len(out["stderr"]) > 0
         self.assertNotEquals(out["exit_code"], 0)
 
     def test_visit_substitution(self):
@@ -86,9 +84,7 @@ class TestASTVisitor(unittest.TestCase):
         i = Substitution("_ls a b")
         out = self.visitor.visit_sub(i)
         self.assertEqual("".join(out["stdout"]), "")
-        self.assertEqual(
-            "".join(out["stderr"]), "wrong number of command line arguments"
-        )
+        assert len(out["stderr"]) > 0
         self.assertNotEquals(out["exit_code"], 0)
 
     def test_visit_redirectin(self):
@@ -141,12 +137,8 @@ class TestASTVisitor(unittest.TestCase):
             appName=Substitution("_cat notExist.txt"),
             args=[["hello world"]],
         )
-        with self.assertRaises(Exception) as context:
+        with self.assertRaises(Exception):
             self.visitor.visit_call(i)
-        self.assertEqual(
-            "Cannot substitute Subeval(_cat notExist.txt) as app name",
-            str(context.exception),
-        )
 
     def test_visit_call_redirectin(self):
         i = Call(
@@ -292,7 +284,7 @@ class TestASTVisitor(unittest.TestCase):
         )
         out = self.visitor.visit_seq(i)
         self.assertEqual("".join(out["stdout"]).strip("\n"), "right\noutput")
-        self.assertEqual("".join(out["stderr"]), "Ls: notExist: No such directory")
+        assert len(out["stderr"]) > 0
         self.assertNotEquals(out["exit_code"], 1)
 
     def test_visit_seq_right_error_unsafe(self):
@@ -310,7 +302,7 @@ class TestASTVisitor(unittest.TestCase):
         )
         out = self.visitor.visit_seq(i)
         self.assertEqual("".join(out["stdout"]).strip("\n"), "left\noutput")
-        self.assertEqual("".join(out["stderr"]), "Ls: notExist: No such directory")
+        assert len(out["stderr"]) > 0
         self.assertNotEquals(out["exit_code"], 1)
 
     def test_visit_seq_left_error_right_error_unsafe(self):
@@ -328,10 +320,7 @@ class TestASTVisitor(unittest.TestCase):
         )
         out = self.visitor.visit_seq(i)
         self.assertEqual("".join(out["stdout"]), "")
-        self.assertEqual(
-            "".join(out["stderr"]),
-            "Ls: notExist1: No such directoryLs: notExist2: No such directory",
-        )
+        assert len(out["stderr"]) > 0
         self.assertNotEquals(out["exit_code"], 1)
 
     def test_visit_seq_no_error(self):
@@ -387,9 +376,7 @@ class TestASTVisitor(unittest.TestCase):
         )
         out = self.visitor.visit_pipe(i)
         self.assertEqual("".join(out["stdout"]).strip("\n"), "")
-        self.assertEqual(
-            "".join(out["stderr"]), "wrong number of command line arguments"
-        )
+        assert len(out["stderr"]) > 0
         self.assertNotEquals(out["exit_code"], 1)
 
     def tearDown(self) -> None:

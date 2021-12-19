@@ -266,41 +266,48 @@ class ASTVisitor(Visitor):
     # args: [[],[]]
     def _getArgs(self, args):
 
-        glob_index = []
         globbed_result = []
         parsedArg = []
+        glob_index = []
 
         for n, arg in enumerate(args):
-            argOut = deque()
 
             # arg: []
+            argOut = deque()
             for subArg in arg:
-
-                if (
-                    isinstance(subArg, DoubleQuote)
-                    or isinstance(subArg, Substitution)
-                    or isinstance(subArg, SingleQuote)
-                ):
-                    executedProcess = subArg.accept(self)
-
-                    if executedProcess["exit_code"]:
-                        raise Exception(executedProcess["stderr"])
-                    else:
-                        argOut.append("".join(executedProcess["stdout"]))
-
-                # ['a','*.py']
-                elif isinstance(subArg, str) and "*" in subArg:
-                    glob_index.append(n)
-                    argOut.append(subArg)
-
-                else:
-                    argOut.append(subArg)
+                argOut_new, glob_index = self._getSubArg(subArg, glob_index, n)
+                argOut.extend(argOut_new)
 
             parsedArg.append("".join(argOut))
             if n in glob_index:
                 globbed_result.append(glob(parsedArg[-1]))
 
         return (parsedArg, glob_index, globbed_result)
+
+    def _getSubArg(self, subArg, glob_index, n):
+        argOut = deque()
+
+        if (
+            isinstance(subArg, DoubleQuote)
+            or isinstance(subArg, Substitution)
+            or isinstance(subArg, SingleQuote)
+        ):
+            executedProcess = subArg.accept(self)
+
+            if executedProcess["exit_code"]:
+                raise Exception(executedProcess["stderr"])
+            else:
+                argOut.append("".join(executedProcess["stdout"]))
+
+        # ['a','*.py']
+        elif isinstance(subArg, str) and "*" in subArg:
+            glob_index.append(n)
+            argOut.append(subArg)
+
+        else:
+            argOut.append(subArg)
+
+        return (argOut, glob_index)
 
     def _getAppName(self, appName):
 
@@ -348,7 +355,3 @@ class ASTVisitor(Visitor):
             args_lst.append(argsForThisPair)
 
         return args_lst
-
-
-if __name__ == "__main__":
-    ASTVisitor().visit_redirect_out(RedirectOut("*.txt"))
