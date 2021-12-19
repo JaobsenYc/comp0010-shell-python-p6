@@ -1,7 +1,18 @@
 import unittest
-import mock
 import subprocess
+from shell import eval, handle_arg_case
+from io import StringIO 
+import sys
 
+class OutputCapture(list):
+    def __enter__(self):
+        self._stdout = sys.stdout
+        sys.stdout = self._stringio = StringIO()
+        return self
+    def __exit__(self, *args):
+        self.extend(self._stringio.getvalue().splitlines())
+        del self._stringio  
+        sys.stdout = self._stdout
 
 class TestShell(unittest.TestCase):
     @classmethod
@@ -27,8 +38,15 @@ class TestShell(unittest.TestCase):
         self.assertEqual(out.strip(), "hello world")
 
     def test_shell_handle_no_arg(self):
-        with mock.patch("builtins.input", return_value='-c echo "hello world"'):
-            self.assertEqual(self.eval("")[0].strip(), "hello world")
+        process = subprocess.Popen(
+            ["/comp0010/sh"],
+            universal_newlines=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            stdin=subprocess.PIPE,
+        )
+        output, error = process.communicate('echo "hello world"')
+        self.assertEqual(output.strip(), "/comp0010> hello world\n/comp0010>")
 
     # has been covered
     def test_shell_handle_two_args(self):
@@ -41,8 +59,17 @@ class TestShell(unittest.TestCase):
 
     def test_shell_handle_unexpected_arg(self):
         out, err = self.eval("-d", 'echo "hello world"')
-        print(out, err)
-        assert len(out) > 0
+        assert len(err) > 0
+
+    def test_eval(self):
+        with OutputCapture() as out:
+            eval('echo "hello world"')
+        self.assertEqual(out[0], "hello world")
+
+    def test_handle_arg_case(self):
+        with OutputCapture() as out:
+            handle_arg_case(['shell.py', '-c', 'echo "hello world"'])
+        self.assertEqual(out[0], "hello world")
 
 
 if __name__ == "__main__":
