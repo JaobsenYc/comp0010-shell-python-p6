@@ -178,7 +178,7 @@ class TestASTVisitor(unittest.TestCase):
             appName="cat",
             args=[],
         )
-        out = self.visitor.visit_call(i, input="input\ncontent")
+        out = self.visitor.visit_call(i, in_put="input\ncontent")
         self.assertEqual("".join(out["stdout"]).strip("\n"), "input\ncontent")
         self.assertEqual("".join(out["stderr"]), "")
         self.assertEqual(out["exit_code"], 0)
@@ -191,7 +191,7 @@ class TestASTVisitor(unittest.TestCase):
             appName="cat",
             args=[],
         )
-        out = self.visitor.visit_call(i, input="input\ncontent")
+        out = self.visitor.visit_call(i, in_put="input\ncontent")
         self.assertEqual("".join(out["stdout"]).strip("\n"), "redirectin\ncontent")
         self.assertEqual("".join(out["stderr"]), "")
         self.assertEqual(out["exit_code"], 0)

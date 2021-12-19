@@ -1,3 +1,8 @@
+"""
+    this is a visitor module
+    to specify AST visitor funcs for all AST types
+"""
+
 from abc import ABC, abstractmethod
 from collections import deque
 from glob import glob
@@ -13,11 +18,6 @@ from abstract_syntax_tree import (
 from appsFactory import AppsFactory
 from parsercombinator import command
 
-"""
-    this is a visitor module
-    to specify AST visitor funcs for all AST types
-"""
-
 
 class Visitor(ABC):
     """
@@ -25,11 +25,11 @@ class Visitor(ABC):
     """
 
     @abstractmethod
-    def visit_single_quote(self, singleQuote):
+    def visit_single_quote(self, single_quote):
         """visit singlequote"""
 
     @abstractmethod
-    def visit_double_quote(self, doubleQuote):
+    def visit_double_quote(self, double_quote):
         """visit doublequote"""
 
     @abstractmethod
@@ -37,15 +37,15 @@ class Visitor(ABC):
         """visit substitution"""
 
     @abstractmethod
-    def visit_redirect_in(self, redirectIn):
+    def visit_redirect_in(self, redirect_in):
         """visit redirectin"""
 
     @abstractmethod
-    def visit_redirect_out(self, redirectOut):
+    def visit_redirect_out(self, redirect_out, stdin=None):
         """visit redirectout"""
 
     @abstractmethod
-    def visit_call(self, call, input=None):
+    def visit_call(self, call, in_put=None):
         """visit call"""
 
     @abstractmethod
@@ -147,7 +147,7 @@ class ASTVisitor(Visitor):
         assert len(fs) >= 1
 
         for i in fs:
-            with open(i) as f:
+            with open(i, "r") as f:
                 out.extend(f.readlines())
 
         return {"stdout": out, "stderr": deque(), "exit_code": 0}
@@ -181,7 +181,9 @@ class ASTVisitor(Visitor):
     :returns: this is a dictionary of srdout, stderr and exit_code
     """
 
-    def visit_call(self, call, input=None):
+    def visit_call(self, call, in_put=None):
+        assert isinstance(call, Call)
+
         redirects = call.redirects
         appName = call.appName
         args = call.args
@@ -192,6 +194,7 @@ class ASTVisitor(Visitor):
 
         # "`echo echo` foo"
         appName = self._getAppName(appName)
+        assert appName is not None
         app = factory.getApp(appName)
 
         try:
@@ -202,6 +205,7 @@ class ASTVisitor(Visitor):
         # otherwise, stdin will overwrite input from last call result piped in
         if not stdin:
             stdin = input or deque()
+        assert stdin is not None
 
         parsedArg, glob_index, globbed_result = self._getArgs(args)
 
@@ -214,6 +218,8 @@ class ASTVisitor(Visitor):
             executed = app.exec(final_args, stdin=stdin)
             out.extend(executed["stdout"])
             err.extend(executed["stderr"])
+        assert isinstance(out, deque)
+        assert isinstance(err, deque)
 
         if redirectOut:
             redirectOut.accept(self, stdin=out)
@@ -236,6 +242,9 @@ class ASTVisitor(Visitor):
         outLeft["stdout"].extend(outRight["stdout"])
         outLeft["stderr"].extend(outRight["stderr"])
 
+        assert isinstance(outLeft["stdout"], deque)
+        assert isinstance(outLeft["stderr"], deque)
+
         return {
             "stdout": outLeft["stdout"],
             "stderr": outLeft["stderr"],
@@ -254,6 +263,9 @@ class ASTVisitor(Visitor):
         outLeft = left.accept(self)
         outRight = right.accept(self, input=outLeft["stdout"])
         outLeft["stderr"].extend(outRight["stderr"])
+
+        assert isinstance(outLeft["stdout"], deque)
+        assert isinstance(outLeft["stderr"], deque)
 
         return {
             "stdout": outRight["stdout"],
@@ -287,17 +299,12 @@ class ASTVisitor(Visitor):
     def _getSubArg(self, subArg, glob_index, n):
         argOut = deque()
 
-        if (
-            isinstance(subArg, DoubleQuote)
-            or isinstance(subArg, Substitution)
-            or isinstance(subArg, SingleQuote)
-        ):
+        if isinstance(subArg, (DoubleQuote, SingleQuote, Substitution)):
             executedProcess = subArg.accept(self)
 
             if executedProcess["exit_code"]:
                 raise Exception(executedProcess["stderr"])
-            else:
-                argOut.append("".join(executedProcess["stdout"]))
+            argOut.append("".join(executedProcess["stdout"]))
 
         # ['a','*.py']
         elif isinstance(subArg, str) and "*" in subArg:
@@ -316,6 +323,7 @@ class ASTVisitor(Visitor):
             if subExecuted["exit_code"] != 0:
                 raise Exception(f"Cannot substitute {appName} as app name")
 
+            assert len(subExecuted["stderr"]) == 0
             appName = "".join(subExecuted["stdout"]).strip(" \n")
 
         return appName
