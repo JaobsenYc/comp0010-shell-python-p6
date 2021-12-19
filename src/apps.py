@@ -600,7 +600,7 @@ class LocalApp:
             stdin = "".join(stdin)
             if len(stdin) > 0:
                 process = Popen(
-                    f"{sysApp} {' '.join(args)}",
+                    f"{sysApp}{' ' if len(args) > 0 else ''}{' '.join(args)}",
                     universal_newlines=True,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
@@ -609,7 +609,7 @@ class LocalApp:
                 output, error = process.communicate(stdin)
             else:
                 process = Popen(
-                    f"{sysApp} {' '.join(args)}",
+                    f"{sysApp}{' ' if len(args) > 0 else ''}{' '.join(args)}",
                     universal_newlines=True,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
