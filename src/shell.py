@@ -1,43 +1,39 @@
 import sys
 import os
 from collections import deque
-from src.parsercombinator import command
-from src.visitor import ASTVisitor
+from parsercombinator import command
+from visitor import ASTVisitor
 import traceback
 
-if __name__ == "__main__":
+
+def eval(cmdline):
     visitor = ASTVisitor()
-    out = deque()
-    args_num = len(sys.argv) - 1
+    cmd = command.parse(cmdline)
+
+    try:
+        out = cmd.accept(visitor)
+        if out["exit_code"]:
+            print("".join(out["stdout"]), end="")
+            print("".join(out["stderr"]), end="")
+        else:
+            print("".join(out["stdout"]), end="")
+    except Exception:
+        print(traceback.format_exc(), file=sys.stderr)
+
+
+def handle_arg_case(args=[]):
+    args_num = len(args) - 1
     if args_num > 0:
         if args_num != 2:
             raise ValueError("wrong number of command line arguments")
-        if sys.argv[1] != "-c":
-            raise ValueError(f"unexpected command line argument {sys.argv[1]}")
-        cmd = command.parse(sys.argv[2])
-
-        try:
-            out = cmd.accept(visitor)
-            if out["exit_code"]:
-                print("".join(out["stdout"]), end="")
-                print("".join(out["stderr"]), end="")
-            else:
-                print("".join(out["stdout"]), end="")
-        except Exception:
-            print(traceback.format_exc(), file=sys.stderr)
-
+        if args[1] != "-c":
+            raise ValueError(f"unexpected command line argument {args[1]}")
+        eval(args[2])
     else:
         while True:
             print(os.getcwd() + "> ", end="")
-            cmdline = input()
-            cmd = command.parse(cmdline)
+            eval(input())
 
-            try:
-                out = cmd.accept(visitor)
-                if out["exit_code"]:
-                    print("".join(out["stdout"]), end="")
-                    print("".join(out["stderr"]), end="")
-                else:
-                    print("".join(out["stdout"]), end="")
-            except Exception:
-                print(traceback.format_exc(), file=sys.stderr)
+
+if __name__ == "__main__":
+    handle_arg_case(sys.argv)

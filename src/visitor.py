@@ -1,5 +1,5 @@
-from abc import ABC, abstractmethod, abstractproperty
-from src.abstract_syntax_tree import (
+from abc import ABC, abstractmethod
+from abstract_syntax_tree import (
     DoubleQuote,
     RedirectIn,
     RedirectOut,
@@ -7,43 +7,43 @@ from src.abstract_syntax_tree import (
     Substitution,
     Call,
 )
-from src.parsercombinator import command
+from parsercombinator import command
 from glob import glob
-from src.appsFactory import AppsFactory
+from appsFactory import AppsFactory
 from collections import deque
 from itertools import product
 
 
 class Visitor(ABC):
-    @abstractproperty
+    @abstractmethod
     def visitSingleQuote(self, singleQuote):
         """visit singlequote"""
 
-    @abstractproperty
+    @abstractmethod
     def visitDoubleQuote(self, doubleQuote):
         """visit doublequote"""
 
-    @abstractproperty
+    @abstractmethod
     def visitSub(self, sub):
         """visit substitution"""
 
-    @abstractproperty
+    @abstractmethod
     def visitRedirectIn(self, redirectIn):
         """visit redirectin"""
 
-    @abstractproperty
+    @abstractmethod
     def visitRedirectOut(self, redirectOut):
         """visit redirectout"""
 
-    @abstractproperty
+    @abstractmethod
     def visitCall(self, call, input=None):
         """visit call"""
 
-    @abstractproperty
+    @abstractmethod
     def visitSeq(self, seq):
         """visit sequence"""
 
-    @abstractproperty
+    @abstractmethod
     def visitPipe(self, pipe):
         """visit pipe"""
 
@@ -192,8 +192,8 @@ class ASTVisitor(Visitor):
             raise e
 
         # otherwise, stdin will overwrite input from last call result piped in
-        if input and not stdin:
-            stdin = input
+        if not stdin:
+            stdin = input or deque()
 
         parsedArg, glob_index, globbed_result = self._getArgs(args)
 
@@ -343,10 +343,6 @@ class ASTVisitor(Visitor):
 
 
 if __name__ == "__main__":
-    i = Call(
-        redirects=[],
-        appName=Substitution("echo echo"),
-        args=[["hello world"]],
-    )
+    i = Call(redirects=[], appName=Substitution("echo echo"), args=[["hello world"]],)
     out = ASTVisitor().visitCall(i)
     assert "".join(out["stdout"]).strip("\n") == "hello world"

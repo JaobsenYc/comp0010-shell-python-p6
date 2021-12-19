@@ -1,8 +1,8 @@
 from collections import deque
 import unittest
 
-from src.visitor import ASTVisitor
-from src.abstract_syntax_tree import (
+from visitor import ASTVisitor
+from abstract_syntax_tree import (
     DoubleQuote,
     Substitution,
     SingleQuote,
