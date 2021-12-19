@@ -10,3 +10,4 @@ pylint-json2html
 mock
 pytest
 mutmut
+mccabe

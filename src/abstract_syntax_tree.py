@@ -16,12 +16,6 @@ class SingleQuote(AST):
     def accept(self, visitor):
         return visitor.visit_single_quote(self)
 
-    def __str__(self):
-        return "SingleQ({})".format(str(self.quotedPart))
-
-    def __repr__(self):
-        return "SingleQ({})".format(str(self.quotedPart))
-
 
 class DoubleQuote(AST):
     def __init__(self, quotedPart, containSubstitution):
@@ -31,12 +25,6 @@ class DoubleQuote(AST):
 
     def accept(self, visitor):
         return visitor.visit_double_quote(self)
-
-    def __str__(self):
-        return "DoubleQ({})".format(str(self.quotedPart))
-
-    def __repr__(self):
-        return "DoubleQ({})".format(str(self.quotedPart))
 
 
 class Substitution(AST):
@@ -48,12 +36,6 @@ class Substitution(AST):
         res = visitor.visit_sub(self)
         return res
 
-    def __str__(self) -> str:
-        return f"Subeval({str(self.quoted)})"
-
-    def __repr__(self) -> str:
-        return f"Subeval({str(self.quoted)})"
-
 
 class RedirectIn(AST):
     def __init__(self, arg) -> None:
@@ -62,12 +44,6 @@ class RedirectIn(AST):
     def accept(self, visitor):
         return visitor.visit_redirect_in(self)
 
-    def __str__(self) -> str:
-        return f"RediectIn({str(self.arg)})"
-
-    def __repr__(self) -> str:
-        return f"RediectIn({str(self.arg)})"
-
 
 class RedirectOut(AST):
     def __init__(self, arg) -> None:
@@ -75,12 +51,6 @@ class RedirectOut(AST):
 
     def accept(self, visitor, stdin=None):
         return visitor.visit_redirect_out(self, stdin)
-
-    def __str__(self) -> str:
-        return f"RediectOut({str(self.arg)})"
-
-    def __repr__(self) -> str:
-        return f"RediectOut({str(self.arg)})"
 
 
 class Call(AST):
@@ -95,12 +65,6 @@ class Call(AST):
     def accept(self, visitor, input=None):
         return visitor.visit_call(self, in_put=input)
 
-    def __str__(self) -> str:
-        return f"Call(\
-                {str(self.redirects)}, \
-                {str(self.appName)}, \
-                {str(self.args)})"
-
 
 class Seq(AST):
     def __init__(self, left, right) -> None:
@@ -111,9 +75,6 @@ class Seq(AST):
     def accept(self, visitor):
         return visitor.visit_seq(self)
 
-    def __str__(self) -> str:
-        return f"Seq({str(self.left)}, {str(self.right)})"
-
 
 class Pipe(AST):
     def __init__(self, left, right) -> None:
@@ -123,6 +84,3 @@ class Pipe(AST):
 
     def accept(self, visitor):
         return visitor.visit_pipe(self)
-
-    def __str__(self) -> str:
-        return f"Pipe({str(self.left)}, {str(self.right)})"

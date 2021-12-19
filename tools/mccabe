@@ -1,0 +1,13 @@
+#!/bin/bash
+
+TOOLS_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+cd "$TOOLS_ROOT/../" 
+
+for sourceFile in src/*.py
+do
+    echo "-----------------------"
+    echo "$sourceFile"
+    echo "-----------------------"
+    python -m mccabe --min 1 "$sourceFile"
+done
