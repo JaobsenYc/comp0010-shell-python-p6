@@ -70,5 +70,5 @@ class TestShell(unittest.TestCase):
     #             handle_arg_case(["-d", 'echo "hello world"'])
 
 
-if __name__ == "__main__":
-    unittest.main()
+# if __name__ == "__main__":
+#     unittest.main()

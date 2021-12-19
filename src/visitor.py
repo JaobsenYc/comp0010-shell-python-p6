@@ -204,7 +204,7 @@ class ASTVisitor(Visitor):
 
         # otherwise, stdin will overwrite input from last call result piped in
         if not stdin:
-            stdin = input or deque()
+            stdin = in_put or deque()
         assert stdin is not None
 
         parsedArg, glob_index, globbed_result = self._getArgs(args)
