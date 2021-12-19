@@ -595,12 +595,12 @@ class LocalApp:
         return possibleExecutable
 
     def _is_valid_path_to_executable(
-        self, executablePath, existsAndExecutable=os.F_OK | os.X_OK
+            self, executablePath, existsAndExecutable=os.F_OK | os.X_OK
     ):
         if (
-            os.path.exists(executablePath)
-            and os.access(executablePath, existsAndExecutable)
-            and not os.path.isdir(executablePath)
+                os.path.exists(executablePath)
+                and os.access(executablePath, existsAndExecutable)
+                and not os.path.isdir(executablePath)
         ):
             return executablePath
         else:
@@ -636,27 +636,6 @@ class LocalApp:
             else:
                 stdout.append(output)
         else:
-            std_dict["stderr"].append(f"No application {self.app} is found\n")
+            std_dict["stderr"] = f"No application {self.app} is found\n"
         std_dict["stdout"] = stdout
         return std_dict
-
-
-# os.mkdir("apps")
-# os.chdir("apps")
-# with open("file1.txt", "w") as f1:
-#     f1.write("abc\nadc\nabc\ndef")
-#
-# with open("file2.txt", "w") as f2:
-#     f2.write("file2\ncontent")
-#
-#
-# args = []
-# output = LocalApp("ls").exec(args=args)
-# stdout = output["stdout"]
-#
-#
-# os.remove("file1.txt")
-# os.remove("file2.txt")
-# os.chdir("..")
-# os.rmdir("apps")
-# print(stdout)
