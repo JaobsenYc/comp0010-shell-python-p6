@@ -14,7 +14,7 @@ class SingleQuote(AST):
         self.quotedPart = quotedPart
 
     def accept(self, visitor):
-        return visitor.visitSingleQuote(self)
+        return visitor.visit_single_quote(self)
 
     def __str__(self):
         return "SingleQ({})".format(str(self.quotedPart))
@@ -30,7 +30,7 @@ class DoubleQuote(AST):
         assert isinstance(self.quotedPart, Iterable)
 
     def accept(self, visitor):
-        return visitor.visitDoubleQuote(self)
+        return visitor.visit_double_quote(self)
 
     def __str__(self):
         return "DoubleQ({})".format(str(self.quotedPart))
@@ -45,7 +45,7 @@ class Substitution(AST):
         assert isinstance(self.quoted, str)
 
     def accept(self, visitor):
-        res = visitor.visitSub(self)
+        res = visitor.visit_sub(self)
         return res
 
     def __str__(self) -> str:
@@ -60,7 +60,7 @@ class RedirectIn(AST):
         self.arg = arg
 
     def accept(self, visitor):
-        return visitor.visitRedirectIn(self)
+        return visitor.visit_redirect_in(self)
 
     def __str__(self) -> str:
         return f"RediectIn({str(self.arg)})"
@@ -74,7 +74,7 @@ class RedirectOut(AST):
         self.arg = arg
 
     def accept(self, visitor, stdin=None):
-        return visitor.visitRedirectOut(self, stdin)
+        return visitor.visit_redirect_out(self, stdin)
 
     def __str__(self) -> str:
         return f"RediectOut({str(self.arg)})"
@@ -93,7 +93,7 @@ class Call(AST):
         assert len(redirects) <= 2
 
     def accept(self, visitor, input=None):
-        return visitor.visitCall(self, input=input)
+        return visitor.visit_call(self, input=input)
 
     def __str__(self) -> str:
         return f"Call(\
@@ -109,7 +109,7 @@ class Seq(AST):
         assert left is not None and right is not None
 
     def accept(self, visitor):
-        return visitor.visitSeq(self)
+        return visitor.visit_seq(self)
 
     def __str__(self) -> str:
         return f"Seq({str(self.left)}, {str(self.right)})"
@@ -122,7 +122,7 @@ class Pipe(AST):
         assert left is not None and right is not None
 
     def accept(self, visitor):
-        return visitor.visitPipe(self)
+        return visitor.visit_pipe(self)
 
     def __str__(self) -> str:
         return f"Pipe({str(self.left)}, {str(self.right)})"

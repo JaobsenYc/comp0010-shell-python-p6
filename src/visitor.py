@@ -1,4 +1,12 @@
-from abc import ABC, abstractmethod, abstractproperty
+"""
+    this is a visitor module
+    to specify AST visitor funcs for all AST types
+"""
+
+from abc import ABC, abstractproperty
+from glob import glob
+from collections import deque
+from itertools import product
 from src.abstract_syntax_tree import (
     DoubleQuote,
     RedirectIn,
@@ -8,43 +16,44 @@ from src.abstract_syntax_tree import (
     Call,
 )
 from src.parsercombinator import command
-from glob import glob
 from src.appsFactory import AppsFactory
-from collections import deque
-from itertools import product
+
+"""
+    this is a visitor abstract class
+"""
 
 
 class Visitor(ABC):
-    @abstractproperty
-    def visitSingleQuote(self, singleQuote):
-        """visit singlequote"""
+    @property
+    def visit_single_quote(self, singleQuote):
+        """visit single quote"""
 
-    @abstractproperty
-    def visitDoubleQuote(self, doubleQuote):
-        """visit doublequote"""
+    @property
+    def visit_double_quote(self, doubleQuote):
+        """visit double quote"""
 
-    @abstractproperty
-    def visitSub(self, sub):
+    @property
+    def visit_sub(self, sub):
         """visit substitution"""
 
-    @abstractproperty
-    def visitRedirectIn(self, redirectIn):
-        """visit redirectin"""
+    @property
+    def visit_redirect_in(self, redirectIn):
+        """visit redirect in"""
 
-    @abstractproperty
-    def visitRedirectOut(self, redirectOut):
-        """visit redirectout"""
+    @property
+    def visit_redirect_out(self, redirectOut):
+        """visit redirect out"""
 
-    @abstractproperty
-    def visitCall(self, call, input=None):
+    @property
+    def visit_call(self, call, input=None):
         """visit call"""
 
-    @abstractproperty
-    def visitSeq(self, seq):
+    @property
+    def visit_seq(self, seq):
         """visit sequence"""
 
-    @abstractproperty
-    def visitPipe(self, pipe):
+    @property
+    def visit_pipe(self, pipe):
         """visit pipe"""
 
 
@@ -55,7 +64,7 @@ class ASTVisitor(Visitor):
     :returns: this is a dictionary of srdout, stderr and exit_code
     """
 
-    def visitSingleQuote(self, singleQuote):
+    def visit_single_quote(self, singleQuote):
         assert isinstance(singleQuote, SingleQuote)
 
         quotedPart = singleQuote.quotedPart
@@ -69,7 +78,7 @@ class ASTVisitor(Visitor):
     :returns: this is a dictionary of srdout, stderr and exit_code
     """
 
-    def visitDoubleQuote(self, doubleQuote):
+    def visit_double_quote(self, doubleQuote):
         assert isinstance(doubleQuote, DoubleQuote)
 
         containSubstitution, quotedPart = (
@@ -106,7 +115,7 @@ class ASTVisitor(Visitor):
     :returns: this is a dictionary of srdout, stderr and exit_code
     """
 
-    def visitSub(self, sub):
+    def visit_sub(self, sub):
         ast = command.parse(sub.quoted)
         executed = ast.accept(self)
 
@@ -125,7 +134,7 @@ class ASTVisitor(Visitor):
     :returns: this is a dictionary of srdout, stderr and exit_code
     """
 
-    def visitRedirectIn(self, redirectIn):
+    def visit_redirect_in(self, redirectIn):
         assert isinstance(redirectIn, RedirectIn)
 
         out = deque()
@@ -149,7 +158,7 @@ class ASTVisitor(Visitor):
     :returns: this is a dictionary of srdout, stderr and exit_code
     """
 
-    def visitRedirectOut(self, redirectOut, stdin=None):
+    def visit_redirect_out(self, redirectOut, stdin=None):
         assert stdin
 
         fs = glob(redirectOut.arg) or [redirectOut.arg]
@@ -173,7 +182,7 @@ class ASTVisitor(Visitor):
     :returns: this is a dictionary of srdout, stderr and exit_code
     """
 
-    def visitCall(self, call, input=None):
+    def visit_call(self, call, input=None):
         redirects = call.redirects
         appName = call.appName
         args = call.args
@@ -218,7 +227,7 @@ class ASTVisitor(Visitor):
     :returns: this is a dictionary of srdout, stderr and exit_code
     """
 
-    def visitSeq(self, seq):
+    def visit_seq(self, seq):
         left = seq.left
         right = seq.right
 
@@ -239,7 +248,7 @@ class ASTVisitor(Visitor):
     :returns: this is a dictionary of srdout, stderr and exit_code
     """
 
-    def visitPipe(self, pipe):
+    def visit_pipe(self, pipe):
         left = pipe.left
         right = pipe.right
 
@@ -348,5 +357,5 @@ if __name__ == "__main__":
         appName=Substitution("echo echo"),
         args=[["hello world"]],
     )
-    out = ASTVisitor().visitCall(i)
+    out = ASTVisitor().visit_call(i)
     assert "".join(out["stdout"]).strip("\n") == "hello world"
