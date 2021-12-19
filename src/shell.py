@@ -1,14 +1,18 @@
 import sys
 import os
-from collections import deque
 from parsercombinator import command
 from visitor import ASTVisitor
 import traceback
+from parsy import ParseError
 
 
 def eval(cmdline):
     visitor = ASTVisitor()
-    cmd = command.parse(cmdline)
+    try:
+        cmd = command.parse(cmdline)
+    except ParseError:
+        print(traceback.format_exc(), file=sys.stderr)
+        return
 
     try:
         out = cmd.accept(visitor)

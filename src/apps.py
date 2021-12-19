@@ -292,7 +292,8 @@ class Cut:
 
                 [lines.extend(i.splitlines()) for i in input]
             else:
-                std_dict["stderr"] = "Cut: Wrong number of command line arguments"
+                err = "Cut: Wrong number of command line arguments"
+                std_dict["stderr"] = err
                 std_dict["exit_code"] = "1"
                 return std_dict
 
