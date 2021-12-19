@@ -30,14 +30,17 @@ class Cd(Application):
         std_dict = {"stdout": deque(), "stderr": deque(), "exit_code": 0}
         stdout = deque()
         if len(args) == 0 or len(args) > 1:
-            std_dict["stderr"] = "wrong number of command line arguments"
+            std_dict["stderr"] = "Cd: Wrong number of command line arguments."
             std_dict["exit_code"] = "1"
             return std_dict
-        os.chdir(args[0])
-
+        try:
+            os.chdir(args[0])
+        except Exception:
+            std_dict["stderr"] = f"Cd: {args[0]}: No such file or directory"
+            std_dict["exit_code"] = "1"
+            return std_dict
         std_dict["stdout"] = stdout
         return std_dict
-        # print("apps/Cd: " + os.getcwd())
 
 
 class Echo(Application):
@@ -59,7 +62,7 @@ class Ls:
         if len(args) == 0:
             ls_dir = os.getcwd()
         elif len(args) > 1:
-            std_dict["stderr"] = "wrong number of command line arguments"
+            std_dict["stderr"] = "Ls: Wrong number of command line arguments"
             std_dict["exit_code"] = "1"
             return std_dict
         else:
@@ -82,10 +85,7 @@ class Cat:
     def exec(self, args, stdin=None):
         std_dict = {"stdout": deque(), "stderr": deque(), "exit_code": 0}
         stdout = deque()
-        if stdin:
-            stdout = stdin
-
-        else:
+        if not stdin:
             for a in args:
                 try:
                     lines = self.file_helper(a)
@@ -94,6 +94,10 @@ class Cat:
                     std_dict["stderr"] = f"Cat: {a}: No such file or directory"
                     std_dict["exit_code"] = "1"
                     return std_dict
+
+
+        else:
+            stdout = stdin
 
         std_dict["stdout"] = stdout
         return std_dict
@@ -120,7 +124,7 @@ class Head:
                 return std_dict
         elif len(args) == 2:
             if args[0] != "-n":
-                std_dict["stderr"] = "wrong flags"
+                std_dict["stderr"] = "Wrong Flags"
                 std_dict["exit_code"] = "1"
                 return std_dict
             else:
@@ -128,7 +132,7 @@ class Head:
                 lines = list(stdin)
         elif len(args) == 3:
             if args[0] != "-n":
-                std_dict["stderr"] = "wrong flags"
+                std_dict["stderr"] = "Wrong Flags"
                 std_dict["exit_code"] = "1"
                 return std_dict
             else:
@@ -144,7 +148,6 @@ class Head:
             lines = list(stdin)
 
         stdout = self.helper(lines, num_lines)
-
         std_dict["stdout"] = stdout
         return std_dict
 
@@ -172,12 +175,12 @@ class Tail:
             try:
                 lines = self.file_helper(file)
             except FileNotFoundError:
-                std_dict["stderr"] = f"Head: {file}: No such file or directory"
+                std_dict["stderr"] = f"Tail: {file}: No such file or directory"
                 std_dict["exit_code"] = "1"
                 return std_dict
         elif len(args) == 2:
             if args[0] != "-n":
-                std_dict["stderr"] = "wrong flags"
+                std_dict["stderr"] = "Wrong Flags"
                 std_dict["exit_code"] = "1"
                 return std_dict
             else:
@@ -185,7 +188,7 @@ class Tail:
                 lines = list(stdin)
         elif len(args) == 3:
             if args[0] != "-n":
-                std_dict["stderr"] = "wrong flags"
+                std_dict["stderr"] = "Wrong Flags"
                 std_dict["exit_code"] = "1"
                 return std_dict
             else:
@@ -194,7 +197,7 @@ class Tail:
             try:
                 lines = self.file_helper(file)
             except FileNotFoundError:
-                std_dict["stderr"] = "No such file or directory"
+                std_dict["stderr"] = f"Tail: {file}: No such file or directory"
                 std_dict["exit_code"] = "1"
                 return std_dict
         else:
@@ -224,7 +227,7 @@ class Grep:
         std_dict = {"stdout": deque(), "stderr": deque(), "exit_code": 0}
         stdout = deque()
         if len(args) < 1:
-            std_dict["stderr"] = "wrong number of command line arguments"
+            std_dict["stderr"] = "Grep: Wrong number of command line arguments"
             std_dict["exit_code"] = "1"
             return std_dict
         elif len(args) > 1:
@@ -267,31 +270,41 @@ class Cut:
         std_dict = {"stdout": deque(), "stderr": deque(), "exit_code": 0}
         stdout = deque()
         if len(args) > 3:
-            std_dict["stderr"] = "wrong number of command line arguments"
+            std_dict["stderr"] = "Cut: Wrong number of command line arguments"
             std_dict["exit_code"] = "1"
             return std_dict
         elif len(args) == 3:
             if args[0] != "-b":
-                std_dict["stderr"] = "wrong flags"
+                std_dict["stderr"] = "Cut: Wrong Flags"
                 std_dict["exit_code"] = "1"
                 return std_dict
             pattern = args[1]
             file = args[2]
+
         else:
-            if args[0] != "-b":
-                std_dict["stderr"] = "wrong flags"
+            if args:
+                if args[0] != "-b":
+                    std_dict["stderr"] = "Cut: Wrong Flags"
+                    std_dict["exit_code"] = "1"
+                    return std_dict
+                pattern = args[1]
+                input = list(stdin)
+                lines = []
+
+                [lines.extend(i.splitlines()) for i in input]
+            else:
+                std_dict["stderr"] = "Cut: Wrong number of command line arguments"
                 std_dict["exit_code"] = "1"
                 return std_dict
-            pattern = args[1]
-            input = stdin.pop()
-            lines = [input.strip()]
 
         pattern_list = pattern.split(",")
+
         if not lines:
             try:
                 lines = self.file_helper(file)
+
             except FileNotFoundError:
-                std_dict["stderr"] = "No such file or directory"
+                std_dict["stderr"] = f"Cut: {file}: No such file or directory"
                 std_dict["exit_code"] = "1"
                 return std_dict
                 # If the cut command uses the -b option,
@@ -321,7 +334,6 @@ class Cut:
                         if i >= start_list[j] and i <= end_list[j]:
                             cut_line += line[i]
                             break
-
             stdout.append(cut_line + "\n")
 
         std_dict["stdout"] = stdout
@@ -330,6 +342,7 @@ class Cut:
     def file_helper(self, file):
         with open(file) as f:
             lines = f.read().splitlines()
+
         return lines
 
 
@@ -340,12 +353,12 @@ class Uniq:
         ignore = False
 
         if len(args) > 2:
-            std_dict["stderr"] = "wrong number of command line arguments"
+            std_dict["stderr"] = "Uniq: Wrong number of command line arguments"
             std_dict["exit_code"] = "1"
             return std_dict
         elif len(args) == 2:
             if args[0] != "-i":
-                std_dict["stderr"] = "wrong flags"
+                std_dict["stderr"] = "Uniq: Wrong Flags"
                 std_dict["exit_code"] = "1"
                 return std_dict
             else:
@@ -355,7 +368,7 @@ class Uniq:
                 stdout = self.file_helper(file, ignore)
                 std_dict["stdout"] = stdout
             except FileNotFoundError:
-                std_dict["stderr"] = f"Grep: {file}: No such file or directory"
+                std_dict["stderr"] = f"Uniq: {file}: No such file or directory"
                 std_dict["exit_code"] = "1"
             return std_dict
         elif len(args) == 1:
@@ -365,7 +378,7 @@ class Uniq:
                     stdout = self.file_helper(file, ignore)
                     std_dict["stdout"] = stdout
                 except FileNotFoundError:
-                    errMessage = f"Grep: {file}: No such file or directory"
+                    errMessage = f"Uniq: {file}: No such file or directory"
                     std_dict["stderr"] = errMessage
                     std_dict["exit_code"] = "1"
                 return std_dict
@@ -408,12 +421,12 @@ class Sort:
         std_dict = {"stdout": deque(), "stderr": deque(), "exit_code": 0}
         stdout = deque()
         if len(args) > 2:
-            std_dict["stderr"] = "wrong number of command line arguments"
+            std_dict["stderr"] = "Sort: Wrong number of command line arguments"
             std_dict["exit_code"] = "1"
             return std_dict
         elif len(args) == 2:
             if args[0] != "-r":
-                std_dict["stderr"] = "wrong flags"
+                std_dict["stderr"] = "Sort: Wrong Flags"
                 std_dict["exit_code"] = "1"
                 return std_dict
             else:
@@ -424,7 +437,7 @@ class Sort:
                 stdout = self.file_helper(file, reverse)
                 std_dict["stdout"] = stdout
             except FileNotFoundError:
-                std_dict["stderr"] = f"Grep: {file}: No such file or directory"
+                std_dict["stderr"] = f"Sort: {file}: No such file or directory"
                 std_dict["exit_code"] = "1"
             return std_dict
 
@@ -435,7 +448,7 @@ class Sort:
                     stdout = self.file_helper(file, reverse)
                     std_dict["stdout"] = stdout
                 except FileNotFoundError:
-                    errMessage = f"Grep: {file}: No such file or directory"
+                    errMessage = f"Sort: {file}: No such file or directory"
                     std_dict["stderr"] = errMessage
                     std_dict["exit_code"] = "1"
                 return std_dict
@@ -472,19 +485,19 @@ class Find:
         std_dict = {"stdout": deque(), "stderr": deque(), "exit_code": 0}
         stdout = deque()
         if len(args) > 3:
-            std_dict["stderr"] = "wrong number of command line arguments"
+            std_dict["stderr"] = "Find: Wrong number of command line arguments"
             std_dict["exit_code"] = "1"
             return std_dict
         elif len(args) == 3:
             if args[1] != "-name":
-                std_dict["stderr"] = "wrong flags"
+                std_dict["stderr"] = "Find: Wrong Flags"
                 std_dict["exit_code"] = "1"
                 return std_dict
             pattern = args[2]
             dict = args[0]
         else:
             if args[0] != "-name":
-                std_dict["stderr"] = "wrong flags"
+                std_dict["stderr"] = "Find: Wrong Flags"
                 std_dict["exit_code"] = "1"
                 return std_dict
             pattern = args[1]
@@ -502,14 +515,14 @@ class Find:
 
             current = stack.pop()
             dirs = os.listdir(current)
-            # print(current, dirs)
 
             for d in dirs:
                 d1 = os.path.join(current, d)
+                print("d1",d1)
                 if not os.path.isdir(d1):
                     if fnmatch.fnmatch(d, pattern):
                         res.append("/".join([current, d]))
-                elif os.path.isdir(d1):
+                else:
                     stack.append("/".join([current, d]))
 
         return res
@@ -534,9 +547,9 @@ class LocalApp:
         if os.path.dirname(app):
             # path exists,is accessible, and not a directory
             if (
-                os.path.exists(app)
-                and os.access(app, existsAndExecutable)
-                and not os.path.isdir(app)
+                    os.path.exists(app)
+                    and os.access(app, existsAndExecutable)
+                    and not os.path.isdir(app)
             ):
                 return self.app
             return None
@@ -575,9 +588,9 @@ class LocalApp:
             for executable in possibleExecutable:
                 executablePath = os.path.join(os.path.normcase(p), executable)
                 if (
-                    os.path.exists(executablePath)
-                    and os.access(executablePath, existsAndExecutable)
-                    and not os.path.isdir(executablePath)
+                        os.path.exists(executablePath)
+                        and os.access(executablePath, existsAndExecutable)
+                        and not os.path.isdir(executablePath)
                 ):
                     return executablePath
 
@@ -602,3 +615,27 @@ class LocalApp:
             std_dict["stderr"].append(f"No application {self.app} is found\n")
         std_dict["stdout"] = stdout
         return std_dict
+
+
+# os.mkdir("apps")
+# os.chdir("apps")
+# with open("file1.txt", "w") as f1:
+#     f1.write("abc\nadc\nabc\ndef")
+#
+# with open("file2.txt", "w") as f2:
+#     f2.write("file2\ncontent")
+#
+# os.mkdir("find")
+# args = ["-name", "file1.txt"]
+# output = Find().exec(args=args)
+# stdout = output["stdout"]
+# os.rmdir("find")
+#
+#
+#
+# os.remove("file1.txt")
+# os.remove("file2.txt")
+# os.chdir("..")
+# os.rmdir("apps")
+#
+# print(stdout)
