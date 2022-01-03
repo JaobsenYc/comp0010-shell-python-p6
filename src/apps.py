@@ -11,13 +11,22 @@ from subprocess import Popen
 
 
 class Application(ABC):
+    """Abstract Base Classes of Application"""
+
     @classmethod
-    def exec(self, args, stdin):
+    def exec(cls, args, stdin):
         raise (Exception(NotImplementedError))
 
 
 class Pwd(Application):
+    """Outputs the current working directory followed by a newline."""
+
     def exec(self, args=None, stdin=None):
+        """
+        :param args: Arguments
+        :param stdin: Standard input
+        :returns: A dictionary of Standard output, Standard Error and exit_code
+        """
         std_dict = {"stdout": deque(), "stderr": deque(), "exit_code": 0}
         stdout = deque()
         stdout.append(os.getcwd())
@@ -26,7 +35,14 @@ class Pwd(Application):
 
 
 class Cd(Application):
+    """Changes the current working directory."""
+
     def exec(self, args, stdin=None):
+        """
+        :param args: Arguments
+        :param stdin: Standard input
+        :returns: A dictionary of Standard output, Standard Error and exit_code
+        """
         std_dict = {"stdout": deque(), "stderr": deque(), "exit_code": 0}
         stdout = deque()
         if len(args) == 0 or len(args) > 1:
@@ -44,7 +60,16 @@ class Cd(Application):
 
 
 class Echo(Application):
+    """
+    Prints its arguments separated by spaces and followed by a newline to stdout
+    """
+
     def exec(self, args, stdin=None):
+        """
+        :param args: Arguments
+        :param stdin: Standard input
+        :returns: A dictionary of Standard output, Standard Error and exit_code
+        """
         std_dict = {"stdout": deque(), "stderr": deque(), "exit_code": 0}
         stdout = deque()
         # print(args)
@@ -56,7 +81,18 @@ class Echo(Application):
 
 
 class Ls:
+    """
+    Lists the content of a directory.
+    It prints a list of files and directories separated by tabs and followed by a newline.
+    Ignores files and directories whose names start with `.`.
+    """
+
     def exec(self, args, stdin=None):
+        """
+        :param args: Arguments
+        :param stdin: Standard input
+        :returns: A dictionary of Standard output, Standard Error and exit_code
+        """
         std_dict = {"stdout": deque(), "stderr": deque(), "exit_code": 0}
         stdout = deque()
         if len(args) == 0:
@@ -74,15 +110,24 @@ class Ls:
             std_dict["stderr"] = f"Ls: {ls_dir}: No such directory"
             std_dict["exit_code"] = "1"
             return std_dict
-        for f in lst_dir:
-            if not f.startswith("."):
-                stdout.append(f + "\n")
+        for file in lst_dir:
+            if not file.startswith("."):
+                stdout.append(file + "\n")
         std_dict["stdout"] = stdout
         return std_dict
 
 
 class Cat:
+    """
+    Concatenates the content of given files and prints it to stdout
+    """
+
     def exec(self, args, stdin=None):
+        """
+        :param args: Arguments
+        :param stdin: Standard input
+        :returns: A dictionary of Standard output, Standard Error and exit_code
+        """
         std_dict = {"stdout": deque(), "stderr": deque(), "exit_code": 0}
         stdout = deque()
         if not stdin:
@@ -101,14 +146,25 @@ class Cat:
         std_dict["stdout"] = stdout
         return std_dict
 
-    def file_helper(self, file):
+    @classmethod
+    def file_helper(cls, file):
         with open(file) as f:
             lines = f.read()
         return lines
 
 
 class Head:
+    """
+    Prints the first N lines of a given file or stdin.
+    If there are less than N lines, prints only the existing lines without raising an exception.
+    """
+
     def exec(self, args, stdin=None):
+        """
+        :param args: Arguments
+        :param stdin: Standard input
+        :returns: A dictionary of Standard output, Standard Error and exit_code
+        """
         std_dict = {"stdout": deque(), "stderr": deque(), "exit_code": 0}
         stdout = deque()
         num_lines = 10
@@ -122,21 +178,22 @@ class Head:
                 std_dict["exit_code"] = "1"
                 return std_dict
         elif len(args) == 2:
-            if args[0] != "-n":
-                std_dict["stderr"] = "Wrong Flags"
-                std_dict["exit_code"] = "1"
-                return std_dict
-            else:
+            if args[0] == "-n":
                 num_lines = int(args[1])
                 lines = list(stdin)
-        elif len(args) == 3:
-            if args[0] != "-n":
+            else:
                 std_dict["stderr"] = "Wrong Flags"
                 std_dict["exit_code"] = "1"
                 return std_dict
-            else:
+
+        elif len(args) == 3:
+            if args[0] == "-n":
                 num_lines = int(args[1])
                 file = args[2]
+            else:
+                std_dict["stderr"] = "Wrong Flags"
+                std_dict["exit_code"] = "1"
+                return std_dict
             try:
                 lines = self.file_helper(file)
             except FileNotFoundError:
@@ -150,12 +207,14 @@ class Head:
         std_dict["stdout"] = stdout
         return std_dict
 
-    def file_helper(self, file):
-        with open(file) as f:
+    @classmethod
+    def file_helper(cls, file):
+        with open(file, "r") as f:
             lines = f.readlines()
         return lines
 
-    def helper(self, lines, num_lines):
+    @classmethod
+    def helper(cls, lines, num_lines):
         output = deque()
         display_length = min(len(lines), int(num_lines))
         for i in range(0, display_length):
@@ -164,7 +223,17 @@ class Head:
 
 
 class Tail:
+    """
+    Prints the last N lines of a given file or stdin.
+    If there are less than N lines, prints only the existing lines without raising an exception.
+    """
+
     def exec(self, args, stdin=None):
+        """
+        :param args: Arguments
+        :param stdin: Standard input
+        :returns: A dictionary of Standard output, Standard Error and exit_code
+        """
         std_dict = {"stdout": deque(), "stderr": deque(), "exit_code": 0}
         stdout = deque()
         num_lines = 10
@@ -178,21 +247,23 @@ class Tail:
                 std_dict["exit_code"] = "1"
                 return std_dict
         elif len(args) == 2:
-            if args[0] != "-n":
-                std_dict["stderr"] = "Wrong Flags"
-                std_dict["exit_code"] = "1"
-                return std_dict
-            else:
+            if args[0] == "-n":
                 num_lines = int(args[1])
                 lines = list(stdin)
-        elif len(args) == 3:
-            if args[0] != "-n":
+            else:
                 std_dict["stderr"] = "Wrong Flags"
                 std_dict["exit_code"] = "1"
                 return std_dict
-            else:
+
+        elif len(args) == 3:
+            if args[0] == "-n":
                 num_lines = int(args[1])
                 file = args[2]
+
+            else:
+                std_dict["stderr"] = "Wrong Flags"
+                std_dict["exit_code"] = "1"
+                return std_dict
             try:
                 lines = self.file_helper(file)
             except FileNotFoundError:
@@ -207,12 +278,14 @@ class Tail:
         std_dict["stdout"] = stdout
         return std_dict
 
-    def file_helper(self, file):
-        with open(file) as f:
+    @classmethod
+    def file_helper(cls, file):
+        with open(file, "r") as f:
             lines = f.readlines()
         return lines
 
-    def helper(self, lines, num_lines):
+    @classmethod
+    def helper(cls, lines, num_lines):
         output = deque()
         display_length = min(len(lines), num_lines)
         for i in range(0, min(len(lines), num_lines)):
@@ -221,15 +294,24 @@ class Tail:
 
 
 class Grep:
+    """
+    Searches for lines containing a match to the specified pattern.
+    The output of the command is the list of lines. Each line is printed followed by a newline.
+    """
+
     def exec(self, args, stdin=None):
-        # print("args: ", args)
+        """
+        :param args: Arguments
+        :param stdin: Standard input
+        :returns: A dictionary of Standard output, Standard Error and exit_code
+        """
         std_dict = {"stdout": deque(), "stderr": deque(), "exit_code": 0}
         stdout = deque()
         if len(args) < 1:
             std_dict["stderr"] = "Grep: Wrong number of command line arguments"
             std_dict["exit_code"] = "1"
             return std_dict
-        elif len(args) > 1:
+        if len(args) > 1:
             pattern = args[0]
             files = args[1:]
             for file in files:
@@ -242,29 +324,37 @@ class Grep:
                             else:
                                 stdout.append(line)
                 except FileNotFoundError:
-                    errMessage = f"Grep: {file}: No such file or directory"
-                    std_dict["stderr"] = errMessage
+                    std_dict["stderr"] = f"Grep: {file}: No such file or directory"
                     std_dict["exit_code"] = "1"
                     return std_dict
             std_dict["stdout"] = stdout
             return std_dict
-        else:
-            pattern = args[0]
-            input = list(stdin)
-            for line in input:
-                if re.match(pattern, line):
-                    stdout.append(line)
-            std_dict["stdout"] = stdout
-            return std_dict
 
-    def file_helper(self, file):
-        with open(file) as f:
+        pattern = args[0]
+        for line in list(stdin):
+            if re.match(pattern, line):
+                stdout.append(line)
+        std_dict["stdout"] = stdout
+        return std_dict
+
+    @classmethod
+    def file_helper(cls, file):
+        with open(file, "r") as f:
             lines = f.readlines()
         return lines
 
 
 class Cut:
+    """
+    Cuts out sections from each line of a given file or stdin and prints the result to stdout.
+    """
+
     def exec(self, args, stdin=None):
+        """
+        :param args: Arguments
+        :param stdin: Standard input
+        :returns: A dictionary of Standard output, Standard Error and exit_code
+        """
         lines = None
         std_dict = {"stdout": deque(), "stderr": deque(), "exit_code": 0}
         stdout = deque()
@@ -272,7 +362,7 @@ class Cut:
             std_dict["stderr"] = "Cut: Wrong number of command line arguments"
             std_dict["exit_code"] = "1"
             return std_dict
-        elif len(args) == 3:
+        if len(args) == 3:
             if args[0] != "-b":
                 std_dict["stderr"] = "Cut: Wrong Flags"
                 std_dict["exit_code"] = "1"
@@ -289,7 +379,6 @@ class Cut:
                 pattern = args[1]
                 input = list(stdin)
                 lines = []
-
                 [lines.extend(i.splitlines()) for i in input]
             else:
                 err = "Cut: Wrong number of command line arguments"
@@ -312,6 +401,13 @@ class Cut:
                 # after -b from small to large, and then
                 # extract them.
 
+        stdout = self.cut_helper(lines, pattern_list)
+        std_dict["stdout"] = stdout
+        return std_dict
+
+    @classmethod
+    def cut_helper(cls, lines, pattern_list):
+        result = deque()
         for line in lines:
             start_list = []
             end_list = []
@@ -331,23 +427,31 @@ class Cut:
                     cut_line += line[i]
                 else:
                     for j in range(len(start_list)):
-                        if i >= start_list[j] and i <= end_list[j]:
+                        if start_list[j] <= i <= end_list[j]:
                             cut_line += line[i]
                             break
-            stdout.append(cut_line + "\n")
+            result.append(cut_line + "\n")
+        return result
 
-        std_dict["stdout"] = stdout
-        return std_dict
-
-    def file_helper(self, file):
-        with open(file) as f:
+    @classmethod
+    def file_helper(cls, file):
+        with open(file, "r") as f:
             lines = f.read().splitlines()
 
         return lines
 
 
 class Uniq:
+    """
+    Detects and deletes adjacent duplicate lines from an input file/stdin and prints the result to stdout.
+    """
+
     def exec(self, args, stdin=None):
+        """
+        :param args: Arguments
+        :param stdin: Standard input
+        :returns: A dictionary of Standard output, Standard Error and exit_code
+        """
         std_dict = {"stdout": deque(), "stderr": deque(), "exit_code": 0}
         stdout = deque()
         ignore = False
@@ -356,13 +460,13 @@ class Uniq:
             std_dict["stderr"] = "Uniq: Wrong number of command line arguments"
             std_dict["exit_code"] = "1"
             return std_dict
-        elif len(args) == 2:
-            if args[0] != "-i":
+        if len(args) == 2:
+            if args[0] == "-i":
+                ignore = True
+            else:
                 std_dict["stderr"] = "Uniq: Wrong Flags"
                 std_dict["exit_code"] = "1"
                 return std_dict
-            else:
-                ignore = True
             file = args[1]
             try:
                 stdout = self.file_helper(file, ignore)
@@ -371,8 +475,10 @@ class Uniq:
                 std_dict["stderr"] = f"Uniq: {file}: No such file or directory"
                 std_dict["exit_code"] = "1"
             return std_dict
-        elif len(args) == 1:
-            if args[0] != "-i":
+        if len(args) == 1:
+            if args[0] == "-i":
+                ignore = True
+            else:
                 file = args[0]
                 try:
                     stdout = self.file_helper(file, ignore)
@@ -382,24 +488,22 @@ class Uniq:
                     std_dict["stderr"] = errMessage
                     std_dict["exit_code"] = "1"
                 return std_dict
-            else:
-                ignore = True
 
-        input = list(stdin)
         lines = []
-
-        [lines.extend(i.splitlines(True)) for i in input]
+        [lines.extend(i.splitlines(True)) for i in list(stdin)]
         stdout = self.helper(ignore, lines)
         std_dict["stdout"] = stdout
         return std_dict
 
-    def file_helper(self, file, ignore):
-        with open(file) as f:
+    @classmethod
+    def file_helper(cls, file, ignore):
+        with open(file, "r") as f:
             lines = f.readlines()
-            output = self.helper(ignore, lines)
+            output = cls.helper(ignore, lines)
         return output
 
-    def helper(self, ignore, lines):
+    @classmethod
+    def helper(cls, ignore, lines):
         result = deque()
         output = (
             [k for k, g in itertools.groupby(lines)]
@@ -416,7 +520,16 @@ class Uniq:
 
 
 class Sort:
+    """
+    Sorts the contents of a file/stdin line by line and prints the result to stdout.
+    """
+
     def exec(self, args, stdin=None):
+        """
+        :param args: Arguments
+        :param stdin: Standard input
+        :returns: A dictionary of Standard output, Standard Error and exit_code
+        """
         reverse = False
         std_dict = {"stdout": deque(), "stderr": deque(), "exit_code": 0}
         stdout = deque()
@@ -424,13 +537,13 @@ class Sort:
             std_dict["stderr"] = "Sort: Wrong number of command line arguments"
             std_dict["exit_code"] = "1"
             return std_dict
-        elif len(args) == 2:
-            if args[0] != "-r":
+        if len(args) == 2:
+            if args[0] == "-r":
+                reverse = True
+            else:
                 std_dict["stderr"] = "Sort: Wrong Flags"
                 std_dict["exit_code"] = "1"
                 return std_dict
-            else:
-                reverse = True
             file = args[1]
 
             try:
@@ -441,8 +554,10 @@ class Sort:
                 std_dict["exit_code"] = "1"
             return std_dict
 
-        elif len(args) == 1:
-            if args[0] != "-r":
+        if len(args) == 1:
+            if args[0] == "-r":
+                reverse = True
+            else:
                 file = args[0]
                 try:
                     stdout = self.file_helper(file, reverse)
@@ -452,8 +567,7 @@ class Sort:
                     std_dict["stderr"] = errMessage
                     std_dict["exit_code"] = "1"
                 return std_dict
-            else:
-                reverse = True
+
         lines = []
         input = list(stdin)
         [lines.extend(i.splitlines()) for i in input]
@@ -461,13 +575,15 @@ class Sort:
         std_dict["stdout"] = stdout
         return std_dict
 
-    def file_helper(self, file, reverse):
-        with open(file) as f:
+    @classmethod
+    def file_helper(cls, file, reverse):
+        with open(file, "r") as f:
             lines = f.read().splitlines()
-            output = self.helper(lines, reverse)
+            output = cls.helper(lines, reverse)
         return output
 
-    def helper(self, lines, reverse):
+    @classmethod
+    def helper(cls, lines, reverse):
         output = deque()
         lines.sort()
         if reverse:
@@ -481,14 +597,24 @@ class Sort:
 
 
 class Find:
+    """
+    Recursively searches for files with matching names.
+    Outputs the list of relative paths, each followed by a newline.
+    """
+
     def exec(self, args, stdin=None):
+        """
+        :param args: Arguments
+        :param stdin: Standard input
+        :returns: A dictionary of Standard output, Standard Error and exit_code
+        """
         std_dict = {"stdout": deque(), "stderr": deque(), "exit_code": 0}
         stdout = deque()
         if len(args) > 3:
             std_dict["stderr"] = "Find: Wrong number of command line arguments"
             std_dict["exit_code"] = "1"
             return std_dict
-        elif len(args) == 3:
+        if len(args) == 3:
             if args[1] != "-name":
                 std_dict["stderr"] = "Find: Wrong Flags"
                 std_dict["exit_code"] = "1"
@@ -510,7 +636,8 @@ class Find:
         std_dict["stdout"] = stdout
         return std_dict
 
-    def helper(self, pattern, stack, res):
+    @classmethod
+    def helper(cls, pattern, stack, res):
         while stack:
 
             current = stack.pop()
@@ -528,16 +655,11 @@ class Find:
         return res
 
 
-#
-# class NotSupported:
-#     def __init__(self, app_token):
-#         self.app_token = app_token
-#
-#     def exec(self, out, args):
-#         raise ValueError(f"unsupported application {self.app_token}")
-
-
 class LocalApp:
+    '''
+    Make applications in the same directory, same environment path, or otherwise provided app become callable
+    '''
+
     def __init__(self, appName):
         self.app = appName
 
@@ -570,7 +692,8 @@ class LocalApp:
                 if self._is_valid_path_to_executable(executablePath) is not None:
                     return executablePath
 
-    def _get_system_executables(self, app, path):
+    @classmethod
+    def _get_system_executables(cls, app, path):
         possibleExecutable = [app]
         if sys.platform == "win32":
             if os.curdir not in path:
@@ -584,7 +707,8 @@ class LocalApp:
             possibleExecutable = self._get_possible_exec(app, pathExtensionList)
         return possibleExecutable
 
-    def _get_possible_exec(self, app, pathExtensionList):
+    @classmethod
+    def _get_possible_exec(cls, app, pathExtensionList):
         for extension in pathExtensionList:
             if app.lower().endswith(extension.lower()):
                 possibleExecutable = [app]
@@ -594,13 +718,14 @@ class LocalApp:
 
         return possibleExecutable
 
+    @classmethod
     def _is_valid_path_to_executable(
-        self, executablePath, existsAndExecutable=os.F_OK | os.X_OK
+            cls, executablePath, existsAndExecutable=os.F_OK | os.X_OK
     ):
         if (
-            os.path.exists(executablePath)
-            and os.access(executablePath, existsAndExecutable)
-            and not os.path.isdir(executablePath)
+                os.path.exists(executablePath)
+                and os.access(executablePath, existsAndExecutable)
+                and not os.path.isdir(executablePath)
         ):
             return executablePath
         else:
@@ -631,10 +756,10 @@ class LocalApp:
                     stderr=subprocess.PIPE,
                 )
                 output, error = process.communicate()
-            if error != "":
-                raise Exception(f"{self.app}: " + error)
-            else:
+            if error == "":
                 stdout.append(output)
+            else:
+                raise Exception(f"{self.app}: " + error)
         else:
             std_dict["stderr"] = f"No application {self.app} is found\n"
         std_dict["stdout"] = stdout
